@@ -1,27 +1,37 @@
-# Flutter/Dart tooling
+# --- Flutter / Dart ---
 .dart_tool/
+.packages
+.pub/
 build/
+.metadata
 
-# IDE/editor files
-.vscode/
-.idea/
-*.iml
-
-# OS-specific
-.DS_Store
-Thumbs.db
-Desktop.ini
-
-# Logs and temp files
+# --- Logs & temp ---
 *.log
 *.tmp
 *.swp
 
-# Flutter internal metadata
-.metadata
+# --- IDE / Editors ---
+# Android Studio / IntelliJ
+*.iml
+.idea/
 
-# Platform folders not used
-linux/
-macos/
-windows/
-web/
+# VS Code
+.vscode/
+
+# --- OS files ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- Android only ---
+android/.gradle/
+android/local.properties
+android/captures/
+
+# Variant build outputs
+android/app/debug/
+android/app/profile/
+android/app/release/
+
+# Generated plugin registrant (re-created by Flutter)
+lib/generated_plugin_registrant.dart
