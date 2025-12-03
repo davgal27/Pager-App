@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../controller/pager_controller.dart';
 import '../model/book.dart';
 import 'book_detail_page.dart';
+import 'shop_page.dart';
+
 
 class LibraryPage extends StatefulWidget {
   const LibraryPage({super.key});
@@ -65,26 +67,48 @@ class _LibraryPageState extends State<LibraryPage> {
                 ),
               ),
               const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Search by title or author',
-                    filled: true,
-                    fillColor: Colors.white,
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(26),
-                      borderSide: BorderSide.none,
+             Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                children: [
+                  // Search bar
+                  Expanded(
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search by title or author',
+                        filled: true,
+                        fillColor: Colors.white,
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(26),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _searchQuery = value;
+                        });
+                      },
                     ),
                   ),
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                    });
-                  },
-                ),
+                  const SizedBox(width: 8),
+                  // Shop button
+                  IconButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ShopPage(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.storefront),
+                    tooltip: 'Open shop',
+                  ),
+                ],
               ),
+            ),
+
               const SizedBox(height: 8),
               Expanded(
                 child: FutureBuilder<List<Book>>(

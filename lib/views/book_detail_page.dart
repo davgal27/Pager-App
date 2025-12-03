@@ -162,7 +162,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           const SizedBox(height: 16),
-                          _infoRow('Genre :', _book.genre),
+                          _infoRow('Genre', _book.genre),
                           _infoRow('Publisher :', _book.publisher),
                           _infoRow('Pages :', '${_book.pages}'),
                           _infoRow(

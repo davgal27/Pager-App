@@ -119,9 +119,13 @@ class BooksRepository {
     book.section = newSection;
 
     switch (newSection) {
+
       case Status.toread:
+        // list "To read" 
         book.pageProgress = 0;
+        book.lastProgressUpdated = null;
         break;
+
       case Status.reading:
         if (book.pages <= 0) {
           book.pageProgress = 0;
@@ -131,6 +135,7 @@ class BooksRepository {
           }
         }
         break;
+
       case Status.finished:
         book.pageProgress = book.pages;
         break;

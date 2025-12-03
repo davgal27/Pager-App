@@ -46,11 +46,22 @@ class PagerController {
 
   Future<List<Book>> getLibraryBooks() async {
     final books = await _loadAllBooks();
+    
     final visible = books.where((b) => b.inLibrary).toList();
     visible.sort(
       (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
     );
     return visible;
+  }
+
+   Future<List<Book>> getShopBooks() async {
+    final books = await _loadAllBooks();
+    final shop = books.where((b) => !b.inLibrary).toList();
+
+    shop.sort(
+      (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
+    );
+    return shop;
   }
 
   Future<List<Book>> getReadingBooks() async {
@@ -195,6 +206,30 @@ class PagerController {
     await _saveAllBooks(books);
     return true;
   }
+
+  Future<bool> addBookToLibrary(Book book) async {
+    final books = await _loadAllBooks();
+    final index = books.indexWhere((b) => b.id == book.id);
+    if (index == -1) return false;
+
+    final target = books[index];
+
+    // Ο χρήστης "αγοράζει" το βιβλίο -> μπαίνει στη βιβλιοθήκη του
+    target.inLibrary = true;
+
+    // ΝΕΟ βιβλίο: το βάζουμε αυτόματα στη λίστα "To read"
+    target.section = Status.toread;
+    target.pageProgress = 0;
+
+    // ενημερώνουμε και το Book που κρατάει η UI
+    book.inLibrary = target.inLibrary;
+    book.section = target.section;
+    book.pageProgress = target.pageProgress;
+
+    await _saveAllBooks(books);
+    return true;
+  }
+
 
   Future<bool> saveBook(Book book) async {
     final books = await _loadAllBooks();
