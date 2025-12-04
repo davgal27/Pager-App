@@ -1,7 +1,11 @@
-import '../model/book.dart';
-import '../model/books_repository.dart';
-import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'dart:io';
 
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:path_provider/path_provider.dart';
+
+import '../model/book.dart';
 
 class LibraryStats {
   final int totalBooks;
@@ -26,19 +30,16 @@ class HomeSummary {
   HomeSummary({required this.lastReadingBook, required this.stats});
 }
 
-
 class BookFilter {
   final String id;
   final String name;
   final String query;
   final int? minPages;
   final int? maxPages;
-  final String? genre;     // genre filter
-  final Status? status;    // reading/toread/finished
-  final int? minRating;    // minimum rating filter
+  final String? genre;
+  final Status? status;
+  final int? minRating;
   final bool? inLibrary;
-
-
 
   BookFilter({
     required this.id,
@@ -49,86 +50,132 @@ class BookFilter {
     this.genre,
     this.status,
     this.minRating,
-    this.inLibrary, 
+    this.inLibrary,
   });
 }
+
 class PagerController {
-  PagerController._();
   PagerController._privateConstructor();
   static final PagerController instance = PagerController._privateConstructor();
-  final ValueNotifier<int> libraryUpdateNotifier = ValueNotifier(0);
-  // Use ValueNotifier for dynamic updates
-  final ValueNotifier<List<BookFilter>> savedFiltersNotifier = ValueNotifier([]);
+
+  final ValueNotifier<int> libraryUpdateNotifier = ValueNotifier<int>(0);
+  final ValueNotifier<List<BookFilter>> savedFiltersNotifier =
+      ValueNotifier<List<BookFilter>>([]);
+
   List<BookFilter> get savedFilters => savedFiltersNotifier.value;
-  set savedFilters(List<BookFilter> filters) => savedFiltersNotifier.value = filters;
+  set savedFilters(List<BookFilter> filters) =>
+      savedFiltersNotifier.value = filters;
 
   BookFilter? activeFilter;
 
   List<Book>? _booksCache;
   int? _lastReadingBookId;
-
-  // -----------------------------
-  // New: Track library ownership separately
   final Set<int> _libraryBookIds = {};
 
-  // -----------------------------
-  // Load / Save
+  static const String _assetLibraryPath = 'data/books.json';
+  static const String _userLibraryFileName = 'user_library.json';
+
+  Future<File> _getUserLibraryFile() async {
+    final dir = await getApplicationDocumentsDirectory();
+    return File('${dir.path}/$_userLibraryFileName');
+  }
+
+  Future<List<Book>> _loadBooksFromAssets() async {
+    final jsonStr = await rootBundle.loadString(_assetLibraryPath);
+    final List<dynamic> data = jsonDecode(jsonStr);
+    return data.map((e) => Book.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
   Future<List<Book>> _loadAllBooks() async {
     if (_booksCache != null) return _booksCache!;
-    final books = await BooksRepository.loadLibrary();
 
-    // Initialize library set based on books.json inLibrary flags
+    final file = await _getUserLibraryFile();
+    List<Book> books;
+
+    if (await file.exists()) {
+      try {
+        final content = await file.readAsString();
+        if (content.trim().isNotEmpty) {
+          final List<dynamic> jsonList = jsonDecode(content);
+          books = jsonList
+              .map((e) => Book.fromJson(e as Map<String, dynamic>))
+              .toList();
+        } else {
+          books = await _loadBooksFromAssets();
+        }
+      } catch (_) {
+        books = await _loadBooksFromAssets();
+      }
+    } else {
+      books = await _loadBooksFromAssets();
+    }
+
     _libraryBookIds.clear();
-    for (var book in books) {
-      if (book.inLibrary) _libraryBookIds.add(book.id);
+    for (final b in books) {
+      if (b.inLibrary) _libraryBookIds.add(b.id);
     }
 
     _booksCache = books;
-    return _booksCache!;
+    return books;
   }
 
   Future<void> _saveAllBooks(List<Book> books) async {
     _booksCache = books;
-    await BooksRepository.saveLibrary(books);
+    final file = await _getUserLibraryFile();
+    final list = books.map((b) => b.toJson()).toList();
+    await file.writeAsString(jsonEncode(list));
   }
 
-  // -----------------------------
-  // Shop / Library functions
   Future<List<Book>> getShopBooks() async {
     final books = await _loadAllBooks();
 
-    // mark which books are already in library
-    for (var book in books) {
+    for (final book in books) {
       book.inLibrary = _libraryBookIds.contains(book.id);
     }
 
-    books.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+    books.sort(
+      (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
+    );
     return books;
   }
-
 
   Future<List<Book>> getLibraryBooks() async {
     final books = await _loadAllBooks();
     final library = books.where((b) => _libraryBookIds.contains(b.id)).toList();
-    library.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+    library.sort(
+      (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
+    );
     return library;
   }
 
-
   Future<bool> addBookToLibrary(Book book) async {
-    final alreadyInLibrary = _libraryBookIds.contains(book.id);
+    final books = await _loadAllBooks();
+    final index = books.indexWhere((b) => b.id == book.id);
+    Book target;
 
-    _libraryBookIds.add(book.id);
-    book.inLibrary = true;
-
-    if (!alreadyInLibrary) {
-      book.section = Status.toread;
-      book.pageProgress = 0;
+    if (index == -1) {
+      books.add(book);
+      target = book;
+    } else {
+      target = books[index];
     }
 
-    await _saveAllBooks(_booksCache!);
+    final alreadyInLibrary = _libraryBookIds.contains(target.id);
 
-    libraryUpdateNotifier.value++;  // notify listeners
+    _libraryBookIds.add(target.id);
+    target.inLibrary = true;
+
+    if (!alreadyInLibrary) {
+      target.section = Status.toread;
+      target.pageProgress = 0;
+    }
+
+    book.inLibrary = target.inLibrary;
+    book.section = target.section;
+    book.pageProgress = target.pageProgress;
+
+    await _saveAllBooks(books);
+    libraryUpdateNotifier.value++;
     return true;
   }
 
@@ -137,37 +184,38 @@ class PagerController {
     final index = books.indexWhere((b) => b.id == book.id);
     if (index == -1) return false;
 
-    _libraryBookIds.remove(book.id);
     final target = books[index];
+
+    _libraryBookIds.remove(target.id);
     target.inLibrary = false;
     target.section = Status.toread;
     target.pageProgress = 0;
 
-    book.inLibrary = false;
-    book.section = Status.toread;
-    book.pageProgress = 0;
+    book.inLibrary = target.inLibrary;
+    book.section = target.section;
+    book.pageProgress = target.pageProgress;
 
     await _saveAllBooks(books);
-
-    libraryUpdateNotifier.value++;  // notify listeners
+    libraryUpdateNotifier.value++;
     return true;
   }
-
-
-
-
-
 
   Future<List<Book>> getReadingBooks() async {
     final books = await _loadAllBooks();
     final reading = books
-        .where((b) => _libraryBookIds.contains(b.id) && b.section == Status.reading)
+        .where(
+          (b) => _libraryBookIds.contains(b.id) && b.section == Status.reading,
+        )
         .toList();
 
     reading.sort((a, b) {
       if (_lastReadingBookId != null) {
-        if (a.id == _lastReadingBookId && b.id != _lastReadingBookId) return -1;
-        if (b.id == _lastReadingBookId && a.id != _lastReadingBookId) return 1;
+        if (a.id == _lastReadingBookId && b.id != _lastReadingBookId) {
+          return -1;
+        }
+        if (b.id == _lastReadingBookId && a.id != _lastReadingBookId) {
+          return 1;
+        }
       }
       return a.title.toLowerCase().compareTo(b.title.toLowerCase());
     });
@@ -177,9 +225,15 @@ class PagerController {
 
   Future<HomeSummary> getHomeSummary() async {
     final books = await _loadAllBooks();
-    final libraryBooks = books.where((b) => _libraryBookIds.contains(b.id)).toList();
-    final reading = libraryBooks.where((b) => b.section == Status.reading).toList();
-    final finished = libraryBooks.where((b) => b.section == Status.finished).toList();
+    final libraryBooks = books
+        .where((b) => _libraryBookIds.contains(b.id))
+        .toList();
+    final reading = libraryBooks
+        .where((b) => b.section == Status.reading)
+        .toList();
+    final finished = libraryBooks
+        .where((b) => b.section == Status.finished)
+        .toList();
 
     Book? last;
     if (_lastReadingBookId != null) {
@@ -188,7 +242,9 @@ class PagerController {
       } catch (_) {}
     }
     if (last == null && reading.isNotEmpty) {
-      reading.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+      reading.sort(
+        (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
+      );
       last = reading.first;
     }
 
@@ -295,6 +351,7 @@ class PagerController {
     final books = await _loadAllBooks();
     final index = books.indexWhere((b) => b.id == book.id);
     if (index == -1) return false;
+
     books[index] = book;
     await _saveAllBooks(books);
     return true;

@@ -10,7 +10,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "Bilbo Baggins, a hobbit, goes on an unexpected adventure. This classic fantasy introduces Middle-earth and its legendary characters.",
-		"inLibrary": true,
+		"inLibrary": false,
 		"section": 0,
 		"coverAsset": "assets/covers/the_hobbit.jpg"
 	},
@@ -25,7 +25,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "A chilling depiction of a totalitarian regime and constant surveillance. Orwell's dystopia is both a political warning and literary masterpiece.",
-		"inLibrary": true,
+		"inLibrary": false,
 		"section": 0,
 		"coverAsset": "assets/covers/1984.jpg"
 	},
@@ -40,7 +40,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "Scout Finch navigates childhood in a racially divided town. The story explores morality, empathy, and justice.",
-		"inLibrary": true,
+		"inLibrary": false,
 		"section": 0,
 		"coverAsset": "assets/covers/to_kill_a_mockingbird.jpg"
 	},
@@ -55,7 +55,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "Jay Gatsby's obsession with Daisy Buchanan drives a tale of wealth and illusion. Fitzgerald critiques the American Dream with elegance and style.",
-		"inLibrary": true,
+		"inLibrary": false,
 		"section": 0,
 		"coverAsset": "assets/covers/the_great_gatsby.jpg"
 	},
@@ -70,7 +70,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "Elizabeth Bennet navigates love, family, and social expectations. Austen's wit and insight make this a timeless romantic classic.",
-		"inLibrary": true,
+		"inLibrary": false,
 		"section": 0,
 		"coverAsset": "assets/covers/pride_and_prejudice.jpg"
 	},
@@ -86,7 +86,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "Ishmael joins Captain Ahab's obsessive pursuit of the white whale in a tale of fate and the sea.",
-		"inLibrary": true,
+		"inLibrary": false,
 		"section": 0,
 		"coverAsset": "assets/covers/moby_dick.jpg"
 	},
@@ -101,7 +101,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "A genetically engineered society promises happiness at the cost of individuality and freedom.",
-		"inLibrary": true,
+		"inLibrary": false,
 		"section": 0,
 		"coverAsset": "assets/covers/brave_new_world.jpg"
 	},
@@ -116,7 +116,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "Raskolnikov grapples with guilt and morality after committing a murder he believes justified.",
-		"inLibrary": true,
+		"inLibrary": false,
 		"section": 0,
 		"coverAsset": "assets/covers/crime_and_punishment.jpg"
 	},
@@ -131,7 +131,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "A tempestuous tale of love and revenge on the Yorkshire moors.",
-		"inLibrary": true,
+		"inLibrary": false,
 		"section": 0,
 		"coverAsset": "assets/covers/wuthering_heights.jpg"
 	},
@@ -146,7 +146,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "In a future where books burn, one fireman seeks truth and rebellion.",
-		"inLibrary": true,
+		"inLibrary": false,
 		"section": 0,
 		"coverAsset": "assets/covers/fahrenheit_451.jpg"
 	},
@@ -162,7 +162,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "Frodo begins a perilous journey to destroy the One Ring, gathering allies in Middle-earth.",
-		"inLibrary": true,
+		"inLibrary": false,
 		"section": 0,
 		"coverAsset": "assets/covers/lotr_fellowship.jpg"
 	},
@@ -177,7 +177,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "The Fellowship is broken, yet the quest continues amid wars and the rise of dark powers.",
-		"inLibrary": true,
+		"inLibrary": false,
 		"section": 0,
 		"coverAsset": "assets/covers/lotr_two_towers.jpg"
 	},
@@ -192,7 +192,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "The final battles for Middle-earth culminate as Frodo nears Mount Doom.",
-		"inLibrary": true,
+		"inLibrary": false,
 		"section": 0,
 		"coverAsset": "assets/covers/lotr_return_of_the_king.jpg"
 	},
@@ -207,7 +207,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "An orphan’s journey to independence, love, and moral integrity.",
-		"inLibrary": true,
+		"inLibrary": false,
 		"section": 0,
 		"coverAsset": "assets/covers/jane_eyre.jpg"
 	},
@@ -222,7 +222,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "The Joad family migrates west amid Dust Bowl hardship and hope.",
-		"inLibrary": true,
+		"inLibrary": false,
 		"section": 0,
 		"coverAsset": "assets/covers/grapes_of_wrath.jpg"
 	}
