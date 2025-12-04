@@ -321,6 +321,7 @@ class ReadingBookCard extends StatelessWidget {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.info_outline, color: Colors.white),
+                      
                       onPressed: onInfoPressed,
                     ),
                     const SizedBox(height: 44),

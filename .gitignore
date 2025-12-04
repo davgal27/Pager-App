@@ -1,37 +1,21 @@
-# --- Flutter / Dart ---
+# Flutter/Dart/Pub
 .dart_tool/
+.build/
 .packages
-.pub/
-build/
-.metadata
-
-# --- Logs & temp ---
-*.log
-*.tmp
-*.swp
-
-# --- IDE / Editors ---
-# Android Studio / IntelliJ
-*.iml
+.pub-cache/
+.flutter-plugins
+.flutter-plugins-dependencies
 .idea/
-
-# VS Code
 .vscode/
+*.iml
+*.lock
+pubspec.lock
 
-# --- OS files ---
-.DS_Store
-Thumbs.db
-Desktop.ini
+# Android
+/android/.gradle/
+/android/app/build/
+/android/local.properties
 
-# --- Android only ---
-android/.gradle/
-android/local.properties
-android/captures/
-
-# Variant build outputs
-android/app/debug/
-android/app/profile/
-android/app/release/
-
-# Generated plugin registrant (re-created by Flutter)
-lib/generated_plugin_registrant.dart
+# Other
+*.log
+*.DS_Store

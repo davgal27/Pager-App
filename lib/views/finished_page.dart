@@ -73,7 +73,7 @@ class _FinishedPageState extends State<FinishedPage> {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: TextField(
                   decoration: InputDecoration(
-                    hintText: 'Search finished...',
+                    hintText: 'Search your finished books',
                     filled: true,
                     fillColor: Colors.white,
                     prefixIcon: const Icon(Icons.search),

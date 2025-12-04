@@ -40,7 +40,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "Scout Finch navigates childhood in a racially divided town. The story explores morality, empathy, and justice.",
-		"inLibrary": false,
+		"inLibrary": true,
 		"section": 0,
 		"coverAsset": "assets/covers/to_kill_a_mockingbird.jpg"
 	},
@@ -86,7 +86,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "Ishmael joins Captain Ahab's obsessive pursuit of the white whale in a tale of fate and the sea.",
-		"inLibrary": false,
+		"inLibrary": true,
 		"section": 0,
 		"coverAsset": "assets/covers/moby_dick.jpg"
 	},
@@ -116,7 +116,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "Raskolnikov grapples with guilt and morality after committing a murder he believes justified.",
-		"inLibrary": false,
+		"inLibrary": true,
 		"section": 0,
 		"coverAsset": "assets/covers/crime_and_punishment.jpg"
 	},
@@ -131,7 +131,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "A tempestuous tale of love and revenge on the Yorkshire moors.",
-		"inLibrary": false,
+		"inLibrary": true,
 		"section": 0,
 		"coverAsset": "assets/covers/wuthering_heights.jpg"
 	},
@@ -177,7 +177,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "The Fellowship is broken, yet the quest continues amid wars and the rise of dark powers.",
-		"inLibrary": false,
+		"inLibrary": true,
 		"section": 0,
 		"coverAsset": "assets/covers/lotr_two_towers.jpg"
 	},
@@ -192,7 +192,7 @@
 		"pageProgress": 0,
 		"rating": 0,
 		"description": "The final battles for Middle-earth culminate as Frodo nears Mount Doom.",
-		"inLibrary": false,
+		"inLibrary": true,
 		"section": 0,
 		"coverAsset": "assets/covers/lotr_return_of_the_king.jpg"
 	},

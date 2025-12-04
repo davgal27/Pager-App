@@ -452,7 +452,7 @@ class LibraryStatsBlock extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Total books', style: labelStyle),
+                        const Text('Books owned', style: labelStyle),
                         const SizedBox(height: 4),
                         Text(
                           '${stats.totalBooks}',

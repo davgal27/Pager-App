@@ -212,20 +212,33 @@ class ToReadBookCard extends StatelessWidget {
             ),
             const SizedBox(width: 16),
 
-            // text and buttons 
+            // Text and buttons
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    book.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                  // Title + Info button top-right
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          book.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.info_outline, color: Colors.white),
+                        onPressed: onInfoPressed,
+                      ),
+                    ],
                   ),
+
                   const SizedBox(height: 4),
                   Text(
                     book.author,
@@ -237,40 +250,32 @@ class ToReadBookCard extends StatelessWidget {
                     style: const TextStyle(color: Colors.white70),
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      TextButton.icon(
-                        onPressed: onInfoPressed,
-                        icon: const Icon(Icons.info_outline, color: Colors.white),
-                        label: const Text(
-                          'Info',
-                          style: TextStyle(color: Colors.white),
+
+                  // Start reading button aligned bottom-right
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 130),
+                      child: OutlinedButton(
+                        onPressed: onStartReading,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 8,
+                          ),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        child: const Text(
+                          'Start reading',
+                          textAlign: TextAlign.center,
                         ),
                       ),
-                      const Spacer(),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 130),
-                        child: OutlinedButton(
-                          onPressed: onStartReading,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            side: const BorderSide(color: Colors.white),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(22),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 8,
-                            ),
-                            visualDensity: VisualDensity.compact,
-                          ),
-                          child: const Text(
-                            'Start reading',
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ],
               ),
@@ -281,4 +286,3 @@ class ToReadBookCard extends StatelessWidget {
     );
   }
 }
-

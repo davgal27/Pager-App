@@ -32,3 +32,29 @@ Runner/GeneratedPluginRegistrant.*
 !default.mode2v3
 !default.pbxuser
 !default.perspectivev3
+
+# Flutter & Dart
+.dart_tool/
+.build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Android/IntelliJ
+.idea/
+.gradle/
+*.iml
+local.properties
+
+# iOS
+Pods/
+Runner.xcworkspace/
+DerivedData/
+
+# Generated files
+*.apk
+*.aab
+*.ipa
