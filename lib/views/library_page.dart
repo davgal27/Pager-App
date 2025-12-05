@@ -5,6 +5,7 @@ import 'book_detail_page.dart';
 import 'shop_page.dart';
 import 'book_notes_page.dart';
 
+/// LIBRARY PAGE WIDGET
 class LibraryPage extends StatefulWidget {
   const LibraryPage({super.key});
 
@@ -13,15 +14,16 @@ class LibraryPage extends StatefulWidget {
 }
 
 class _LibraryPageState extends State<LibraryPage> {
+  // CONTROLLER AND STATE
   final PagerController _controller = PagerController.instance;
 
-  late Future<List<Book>> _loadFuture;
-  List<Book> _allBooks = [];
-  String _searchQuery = '';
+  late Future<List<Book>> _loadFuture; // Future for initial book loading
+  List<Book> _allBooks = []; // Local copy of books for UI updates
+  String _searchQuery = ''; // Current search text
 
-  final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController(); // Text controller for search input
 
-  // FIXED: only ONE initState + proper listener
+  // LIFECYCLE METHODS
   @override
   void initState() {
     super.initState();
@@ -29,8 +31,8 @@ class _LibraryPageState extends State<LibraryPage> {
     _controller.libraryUpdateNotifier.addListener(_onLibraryUpdated);
   }
 
-  // FIXED: real callback so removeListener works
   void _onLibraryUpdated() async {
+    // Callback for when the library updates
     final updatedBooks = await _controller.getLibraryBooks();
     if (!mounted) return;
     setState(() {
@@ -44,69 +46,16 @@ class _LibraryPageState extends State<LibraryPage> {
     super.dispose();
   }
 
-  // ---- YOUR FILTER GETTERS, UNTOUCHED ----
+  // FILTER GETTERS AND SETTERS
   List<BookFilter> get _savedFilters => _controller.savedFilters;
   BookFilter? get _activeFilter => _controller.activeFilter;
 
   set _activeFilter(BookFilter? f) {
     _controller.activeFilter = f;
-    setState(() {});
+    setState(() {}); // Refresh UI when active filter changes
   }
 
-  List<Book> _filteredBooks() {
-    var books = _allBooks;
-
-    if (_activeFilter != null) {
-      final f = _activeFilter!;
-
-      // Text search
-      if (f.query.isNotEmpty) {
-        books = books.where((b) =>
-          b.title.toLowerCase().contains(f.query.toLowerCase()) ||
-          b.author.toLowerCase().contains(f.query.toLowerCase())
-        ).toList();
-      }
-
-      // Page range
-      if (f.minPages != null) {
-        books = books.where((b) => b.pages >= f.minPages!).toList();
-      }
-      if (f.maxPages != null) {
-        books = books.where((b) => b.pages <= f.maxPages!).toList();
-      }
-
-      // NEW: Genre
-      if (f.genre != null && f.genre!.trim().isNotEmpty) {
-        books = books.where((b) =>
-          b.genre.toLowerCase() == f.genre!.toLowerCase()
-        ).toList();
-      }
-
-      // NEW: Status
-      if (f.status != null) {
-        books = books.where((b) =>
-          b.section == f.status
-        ).toList();
-      }
-
-      // NEW: Minimum rating
-      if (f.minRating != null) {
-        books = books.where((b) =>
-          b.rating >= f.minRating!
-        ).toList();
-      }
-    }
-
-     else if (_searchQuery.trim().isNotEmpty) {
-      books = books.where((b) =>
-          b.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          b.author.toLowerCase().contains(_searchQuery.toLowerCase())
-      ).toList();
-    }
-
-    return books;
-  }
-
+  // STATUS HELPERS
   Color _statusColor(Status status) {
     switch (status) {
       case Status.toread:
@@ -129,7 +78,7 @@ class _LibraryPageState extends State<LibraryPage> {
     }
   }
 
-  // ----- FILTER DIALOG -----
+  // FILTER DIALOG
   Future<void> _openFilterDialog({BookFilter? filter}) async {
     final nameController = TextEditingController(text: filter?.name ?? '');
     final queryController = TextEditingController(text: filter?.query ?? '');
@@ -147,6 +96,7 @@ class _LibraryPageState extends State<LibraryPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // FILTER FIELDS
               TextField(
                 controller: nameController,
                 decoration: const InputDecoration(labelText: 'Name'),
@@ -165,13 +115,11 @@ class _LibraryPageState extends State<LibraryPage> {
                 decoration: const InputDecoration(labelText: 'Max pages'),
                 keyboardType: TextInputType.number,
               ),
-              // Genre
               TextField(
                 decoration: const InputDecoration(labelText: 'Genre'),
                 controller: TextEditingController(text: selectedGenre),
                 onChanged: (v) => selectedGenre = v,
               ),
-              // Status dropdown
               DropdownButtonFormField<Status>(
                 value: selectedStatus,
                 decoration: const InputDecoration(labelText: 'Status'),
@@ -183,7 +131,6 @@ class _LibraryPageState extends State<LibraryPage> {
                     .toList(),
                 onChanged: (v) => selectedStatus = v,
               ),
-              // Minimum rating
               DropdownButtonFormField<int>(
                 value: minRating,
                 decoration: const InputDecoration(labelText: 'Minimum rating'),
@@ -198,8 +145,6 @@ class _LibraryPageState extends State<LibraryPage> {
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-
-
           TextButton(
             onPressed: () {
               final newFilter = BookFilter(
@@ -224,12 +169,12 @@ class _LibraryPageState extends State<LibraryPage> {
       setState(() {
         _savedFilters.removeWhere((f) => f.id == result.id);
         _savedFilters.add(result);
-        _activeFilter = result; // auto-apply
+        _activeFilter = result; // Auto-apply the new filter
       });
     }
-    
   }
 
+  // BUILD METHOD
   @override
   Widget build(BuildContext context) {
     const background = Color(0xFFF5F0E8);
@@ -244,6 +189,7 @@ class _LibraryPageState extends State<LibraryPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // HEADER
               Container(
                 width: double.infinity,
                 color: headerBrown,
@@ -258,7 +204,7 @@ class _LibraryPageState extends State<LibraryPage> {
               ),
               const SizedBox(height: 8),
 
-              /// ----- FILTER CONTROLS ROW -----
+              // FILTER CONTROLS ROW
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -269,54 +215,54 @@ class _LibraryPageState extends State<LibraryPage> {
                         valueListenable: _controller.savedFiltersNotifier,
                         builder: (context, savedFilters, _) {
                           return DropdownButton<BookFilter?>(
-                            value: _activeFilter, // currently selected filter
+                            value: _activeFilter, // currently selected filter 
                             isExpanded: true,
                             hint: const Text('My Filters'),
                             items: [
-                              // "None" option
+                              // "None" Option
                               DropdownMenuItem<BookFilter?>(
                                 value: null,
                                 child: const Text('None', style: TextStyle(fontWeight: FontWeight.bold)),
                               ),
-                              // Saved filters
+                              //Saved Filters
                               ...savedFilters.map((f) => DropdownMenuItem<BookFilter?>(
-                                value: f,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Flexible(child: Text(f.name, overflow: TextOverflow.ellipsis)),
-                                    Row(
-                                      mainAxisSize: MainAxisSize.min,
+                                    value: f,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        IconButton(
-                                          icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
-                                          onPressed: () {
-                                            Navigator.pop(context); // close dropdown first
-                                            Future.delayed(Duration.zero, () {
-                                              _openFilterDialog(filter: f);
-                                            });
-                                          },
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.delete, size: 18, color: Colors.red),
-                                          onPressed: () {
-                                            final newList = List<BookFilter>.from(savedFilters)..remove(f);
-                                            _controller.savedFiltersNotifier.value = newList;
+                                        Flexible(child: Text(f.name, overflow: TextOverflow.ellipsis)),
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                              icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                                              onPressed: () {
+                                                Navigator.pop(context); // close dropdown first
+                                                Future.delayed(Duration.zero, () {
+                                                  _openFilterDialog(filter: f);
+                                                });
+                                              },
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                                              onPressed: () {
+                                                final newList = List<BookFilter>.from(savedFilters)..remove(f);
+                                                _controller.savedFiltersNotifier.value = newList;
 
-                                            if (_activeFilter?.id == f.id) {
-                                              setState(() {
-                                                _activeFilter = null;
-                                                _searchQuery = '';
-                                              });
-                                            }
-                                            Navigator.pop(context);
-                                          },
+                                                if (_activeFilter?.id == f.id) {
+                                                  setState(() {
+                                                    _activeFilter = null;
+                                                    _searchQuery = '';
+                                                  });
+                                                }
+                                                Navigator.pop(context);
+                                              },
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
-                                  ],
-                                ),
-                              )),
+                                  )),
                             ],
                             onChanged: (f) {
                               setState(() {
@@ -325,7 +271,7 @@ class _LibraryPageState extends State<LibraryPage> {
                               });
                             },
                             selectedItemBuilder: (context) {
-                              // Only show filter name in closed dropdown, no buttons
+                              // only show filter name in closed dropdown
                               return [
                                 for (var f in [null, ...savedFilters])
                                   Padding(
@@ -338,10 +284,9 @@ class _LibraryPageState extends State<LibraryPage> {
                         },
                       ),
                     ),
-
                     const SizedBox(width: 12),
 
-                    // New Filter button
+                    // NEW FILTER BUTTON
                     ElevatedButton.icon(
                       icon: const Icon(Icons.add, size: 18),
                       label: const Text('New Filter'),
@@ -351,16 +296,12 @@ class _LibraryPageState extends State<LibraryPage> {
                       ),
                       onPressed: () => _openFilterDialog(),
                     ),
-
                     const SizedBox(width: 12),
                   ],
                 ),
               ),
 
-
               const SizedBox(height: 8),
-
-
 
               // SEARCH + SHOP ROW
               LibrarySearchRow(
@@ -390,7 +331,10 @@ class _LibraryPageState extends State<LibraryPage> {
                       _allBooks = snapshot.data!;
                     }
 
-                    final books = _filteredBooks();
+                    final books = _controller.filterLibraryBooks(
+                      searchQuery: _searchQuery,
+                      activeFilter: _activeFilter,
+                    );
 
                     if (books.isEmpty) {
                       return const Center(child: Text('No books found.'));
@@ -413,6 +357,7 @@ class _LibraryPageState extends State<LibraryPage> {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                // BOOK COVER
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(10),
                                   child: Image.asset(
@@ -423,6 +368,8 @@ class _LibraryPageState extends State<LibraryPage> {
                                   ),
                                 ),
                                 const SizedBox(width: 12),
+
+                                // BOOK INFO COLUMN
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -447,7 +394,8 @@ class _LibraryPageState extends State<LibraryPage> {
                                         style: const TextStyle(color: Colors.white70),
                                       ),
                                       const SizedBox(height: 8),
-                                      // Status pill
+
+                                      // STATUS PILL
                                       InkWell(
                                         borderRadius: BorderRadius.circular(22),
                                         onTap: () async {
@@ -485,7 +433,8 @@ class _LibraryPageState extends State<LibraryPage> {
                                         ),
                                       ),
                                       const SizedBox(height: 8),
-                                      // Stars
+
+                                      // RATING STARS
                                       Row(
                                         children: List.generate(5, (i) {
                                           final filled = (i + 1) <= b.rating;
@@ -502,7 +451,10 @@ class _LibraryPageState extends State<LibraryPage> {
                                     ],
                                   ),
                                 ),
+
                                 const SizedBox(width: 12),
+
+                                // ACTION BUTTONS COLUMN
                                 Column(
                                   mainAxisSize: MainAxisSize.min,
                                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -547,21 +499,19 @@ class _LibraryPageState extends State<LibraryPage> {
                                         final ok = await _controller.removeBookFromLibrary(b);
                                         if (!mounted || !ok) return;
 
-                                        // Remove from local UI list so ListView updates
                                         setState(() {
                                           _allBooks.removeWhere((element) => element.id == b.id);
                                         });
 
                                         ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text('"${b.title}" removed from library.'),
-                                          backgroundColor: Colors.red,),
+                                          SnackBar(
+                                            content: Text('"${b.title}" removed from library.'),
+                                            backgroundColor: Colors.red,
+                                          ),
                                         );
                                       },
                                       child: const Text('Remove'),
                                     ),
-
-
-
                                   ],
                                 ),
                               ],
@@ -581,10 +531,7 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 }
 
-
-// ======================================================
-// ANIMATED SEARCH + SHOP ROW WIDGET
-// ======================================================
+/// LIBRARY SEARCH + SHOP ROW
 class LibrarySearchRow extends StatefulWidget {
   const LibrarySearchRow({super.key, required this.controller, required this.onSearchChanged});
   final TextEditingController controller;
@@ -595,7 +542,7 @@ class LibrarySearchRow extends StatefulWidget {
 }
 
 class _LibrarySearchRowState extends State<LibrarySearchRow> {
-  bool _isExpanded = false;
+  bool _isExpanded = false; // Search field expanded state
 
   @override
   Widget build(BuildContext context) {
@@ -603,6 +550,7 @@ class _LibrarySearchRowState extends State<LibrarySearchRow> {
 
     return Row(
       children: [
+        // SEARCH FIELD
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           width: _isExpanded ? screenWidth - 32 : screenWidth * 0.6,
@@ -634,6 +582,8 @@ class _LibrarySearchRowState extends State<LibrarySearchRow> {
           ),
         ),
         const SizedBox(width: 8),
+
+        // SHOP BUTTON
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           width: _isExpanded ? 0 : screenWidth * 0.38,
