@@ -75,17 +75,19 @@ class PagerController {
   static const String _assetLibraryPath = 'data/books.json';
   static const String _userLibraryFileName = 'user_library.json';
 
+  /// Returns the file object for the user's library JSON.
   Future<File> _getUserLibraryFile() async {
     final dir = await getApplicationDocumentsDirectory();
     return File('${dir.path}/$_userLibraryFileName');
   }
 
+  /// Loads all book data from the bundled assets JSON.
   Future<List<Book>> _loadBooksFromAssets() async {
     final jsonStr = await rootBundle.loadString(_assetLibraryPath);
     final List<dynamic> data = jsonDecode(jsonStr);
     return data.map((e) => Book.fromJson(e as Map<String, dynamic>)).toList();
   }
-
+  /// Loads all books, either from cached memory, user file, or assets.
   Future<List<Book>> _loadAllBooks() async {
     if (_booksCache != null) return _booksCache!;
 
@@ -119,6 +121,7 @@ class PagerController {
     return books;
   }
 
+  /// Saves the full book list to the user's library file and updates cache.
   Future<void> _saveAllBooks(List<Book> books) async {
     _booksCache = books;
     final file = await _getUserLibraryFile();
@@ -126,6 +129,7 @@ class PagerController {
     await file.writeAsString(jsonEncode(list));
   }
 
+  /// Returns the full list of books available in the shop, marking which are already in the user's library.
   Future<List<Book>> getShopBooks() async {
     final books = await _loadAllBooks();
 
@@ -138,7 +142,8 @@ class PagerController {
     );
     return books;
   }
-
+ 
+  /// Returns all books currently in the user's library.
   Future<List<Book>> getLibraryBooks() async {
     final books = await _loadAllBooks();
     final library = books.where((b) => _libraryBookIds.contains(b.id)).toList();
@@ -148,6 +153,7 @@ class PagerController {
     return library;
   }
 
+  /// Adds a book to the user's library, initializing its reading progress if new.
   Future<bool> addBookToLibrary(Book book) async {
     final books = await _loadAllBooks();
     final index = books.indexWhere((b) => b.id == book.id);
@@ -188,6 +194,7 @@ class PagerController {
     return true;
   }
 
+  /// Removes a book from the user's library, resetting progress and section.
   Future<bool> removeBookFromLibrary(Book book) async {
     final books = await _loadAllBooks();
     final index = books.indexWhere((b) => b.id == book.id);
@@ -214,6 +221,7 @@ class PagerController {
     return true;
   }
 
+  /// Returns a list of books currently being read.
   Future<List<Book>> getReadingBooks() async {
     final books = await _loadAllBooks();
     final reading = books
@@ -237,6 +245,40 @@ class PagerController {
     return reading;
   }
 
+  /// Filters library books by search query and/or active filter criteria.
+  List<Book> filterLibraryBooks({
+    String searchQuery = '',
+    BookFilter? activeFilter,
+  }) {
+    var books = _booksCache?.where((b) => _libraryBookIds.contains(b.id)).toList() ?? [];
+
+    if (activeFilter != null) {
+      final f = activeFilter;
+
+      // Text search
+      if (f.query.isNotEmpty) {
+        books = books.where((b) =>
+          b.title.toLowerCase().contains(f.query.toLowerCase()) ||
+          b.author.toLowerCase().contains(f.query.toLowerCase())
+        ).toList();
+      }
+
+      if (f.minPages != null) books = books.where((b) => b.pages >= f.minPages!).toList();
+      if (f.maxPages != null) books = books.where((b) => b.pages <= f.maxPages!).toList();
+      if (f.genre != null && f.genre!.trim().isNotEmpty) books = books.where((b) => b.genre.toLowerCase() == f.genre!.toLowerCase()).toList();
+      if (f.status != null) books = books.where((b) => b.section == f.status).toList();
+      if (f.minRating != null) books = books.where((b) => b.rating >= f.minRating!).toList();
+    } else if (searchQuery.trim().isNotEmpty) {
+      books = books.where((b) =>
+          b.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          b.author.toLowerCase().contains(searchQuery.toLowerCase())
+      ).toList();
+    }
+
+    return books;
+  }
+
+  /// Returns a summary of the user's library and last reading book, including stats like total books, pages read, and average rating.
   Future<HomeSummary> getHomeSummary() async {
     final books = await _loadAllBooks();
     final libraryBooks =
@@ -296,6 +338,7 @@ class PagerController {
     return HomeSummary(lastReadingBook: last, stats: stats);
   }
 
+  /// Updates a book's reading progress and section based on a new page number.
   Future<bool> setBookProgress(Book book, int newPage) async {
     final books = await _loadAllBooks();
     final index = books.indexWhere((b) => b.id == book.id);
@@ -341,6 +384,7 @@ class PagerController {
 
   }
 
+  /// Updates the rating of a book; toggles off if the same rating is selected.
   Future<bool> updateRating(Book book, int starIndex) async {
     if (starIndex < 1 || starIndex > 5) return false;
 
@@ -358,6 +402,7 @@ class PagerController {
     return true;
   }
 
+  /// Changes the section (To Read, Reading, Finished) of a book and updates progress.
   Future<bool> changeSection(Book book, Status newStatus) async {
     final books = await _loadAllBooks();
     final index = books.indexWhere((b) => b.id == book.id);
@@ -404,15 +449,7 @@ class PagerController {
     return true;
   }
 
-  /// Start a new reading of an already-finished book.
-  ///
-  /// This method:
-  /// - stores the current rating (if any) into [ratingHistory],
-  /// - moves the book back to [Status.reading],
-  /// - resets the rating to 0 for the new reading,
-  /// - does NOT change [completedReadings]; those are updated
-  ///   when the book is finished again via [setBookProgress] or
-  ///   [changeSection].
+ /// Starts a new reading of a finished book, preserving previous rating in history.
    Future<bool> startReread(Book book) async {
     final books = await _loadAllBooks();
     final index = books.indexWhere((b) => b.id == book.id);
@@ -449,7 +486,7 @@ class PagerController {
     await _saveAllBooks(books);
     return true;
   }
-
+  /// Saves the current state of a book to the library file.
   Future<bool> saveBook(Book book) async {
     final books = await _loadAllBooks();
     final index = books.indexWhere((b) => b.id == book.id);
@@ -484,5 +521,54 @@ class PagerController {
     // Άλλες αλλαγές δεν μας ενδιαφέρουν προς το παρόν
     return null;
   }
+
+  /// Filters a given list of books for shop display based on query and/or filter.
+  List<Book> filterShopBooks({
+    required List<Book> books,
+    String? query,
+    BookFilter? filter,
+  }) {
+    var result = books;
+
+    if (query != null && query.trim().isNotEmpty) {
+      final q = query.toLowerCase();
+      result = result.where((b) =>
+        b.title.toLowerCase().contains(q) ||
+        b.author.toLowerCase().contains(q) ||
+        b.genre.toLowerCase().contains(q)
+      ).toList();
+    }
+
+    if (filter != null) {
+      if (filter.query.isNotEmpty) {
+        final q = filter.query.toLowerCase();
+        result = result.where((b) =>
+          b.title.toLowerCase().contains(q) ||
+          b.author.toLowerCase().contains(q) ||
+          b.genre.toLowerCase().contains(q)
+        ).toList();
+      }
+      if (filter.minPages != null) {
+        result = result.where((b) => b.pages >= filter.minPages!).toList();
+      }
+      if (filter.maxPages != null) {
+        result = result.where((b) => b.pages <= filter.maxPages!).toList();
+      }
+      if (filter.genre != null && filter.genre!.trim().isNotEmpty) {
+        result = result.where((b) =>
+          b.genre.toLowerCase() == filter.genre!.toLowerCase()
+        ).toList();
+      }
+      if (filter.minRating != null) {
+        result = result.where((b) => b.rating >= filter.minRating!).toList();
+      }
+      if (filter.inLibrary != null) {
+        result = result.where((b) => b.inLibrary == filter.inLibrary).toList();
+      }
+    }
+
+    return result;
+  }
+
 
 }
