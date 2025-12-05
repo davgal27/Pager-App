@@ -1,3 +1,5 @@
+// AUTHOR: DAVE GALEA XGALEAD00
+
 import 'package:flutter/material.dart';
 import '../controller/pager_controller.dart';
 import '../model/book.dart';
