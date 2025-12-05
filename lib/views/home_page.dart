@@ -5,6 +5,8 @@ import '../model/book.dart';
 import 'book_detail_page.dart';
 import 'book_notes_page.dart';
 
+/// Home screen showing a quick summary of the user's reading:
+/// last book being read + global statistics.
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -13,21 +15,29 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  /// Shared controller (singleton) used to access books and stats.
   final PagerController _controller = PagerController.instance;
+
+  /// Future that loads the current home summary
+  /// (last reading book + library statistics).
   late Future<HomeSummary> _summaryFuture;
 
   @override
   void initState() {
     super.initState();
+    // Initial load of the summary when the screen is created.
     _summaryFuture = _controller.getHomeSummary();
   }
 
+  /// Reloads the summary from the controller and rebuilds the UI.
   Future<void> _refreshSummary() async {
     setState(() {
       _summaryFuture = _controller.getHomeSummary();
     });
   }
 
+  /// Updates the reading progress of [book] via the controller
+  /// then refreshes the summary so that the card and statistics stay in sync.
   Future<void> _changeProgress(Book book, int newPage) async {
     final ok = await _controller.setBookProgress(book, newPage);
     if (!mounted || !ok) return;
@@ -48,6 +58,7 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Top header bar with the "Home" title.
               Container(
                 width: double.infinity,
                 color: headerBrown,
@@ -63,6 +74,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
+              // Main content: scrollable column with last book and statistics.
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(
@@ -72,6 +84,7 @@ class _HomePageState extends State<HomePage> {
                   child: FutureBuilder<HomeSummary>(
                     future: _summaryFuture,
                     builder: (context, snapshot) {
+                      // Initial loading state.
                       if (snapshot.connectionState == ConnectionState.waiting &&
                           !snapshot.hasData) {
                         return const Center(
@@ -81,6 +94,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                         );
                       } else if (snapshot.hasError) {
+                        // Error while loading the summary.
                         return Center(
                           child: Padding(
                             padding: const EdgeInsets.only(top: 40),
@@ -89,6 +103,7 @@ class _HomePageState extends State<HomePage> {
                         );
                       }
 
+                      // At this point we assume we have valid data.
                       final summary = snapshot.data!;
                       final book = summary.lastReadingBook;
 
@@ -106,6 +121,7 @@ class _HomePageState extends State<HomePage> {
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           const SizedBox(height: 24),
+                          // Section: last book the user has been reading.
                           Text(
                             'Last book you read',
                             style: Theme.of(context).textTheme.titleMedium
@@ -113,6 +129,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                           const SizedBox(height: 12),
                           if (book == null)
+                            // No book in progress: show an informational card.
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.all(16),
@@ -126,6 +143,8 @@ class _HomePageState extends State<HomePage> {
                               ),
                             )
                           else
+                            // Card with progress controls and access
+                            // to book info and notes.
                             HomeReadingCard(
                               book: book,
                               onProgressChanged: (newPage) =>
@@ -138,6 +157,8 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 );
                                 if (!mounted) return;
+                                // After coming back from details,
+                                // refresh summary in case status/progress changed.
                                 await _refreshSummary();
                               },
                               onNotesPressed: () {
@@ -153,6 +174,7 @@ class _HomePageState extends State<HomePage> {
                               },
                             ),
                           const SizedBox(height: 32),
+                          // Section: global statistics on the user's library.
                           Text(
                             'Your statistics',
                             style: Theme.of(context).textTheme.titleMedium
@@ -174,6 +196,8 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
+/// Card summarising the last book the user has read,
+/// with quick actions on progress, info and notes.
 class HomeReadingCard extends StatelessWidget {
   final Book book;
   final void Function(int newPage) onProgressChanged;
@@ -188,6 +212,7 @@ class HomeReadingCard extends StatelessWidget {
     required this.onNotesPressed,
   });
 
+  /// Dialog to let the user set an exact page number for the book.
   void _showPageEditDialog(BuildContext context) {
     final controller = TextEditingController(
       text: book.pageProgress.toString(),
@@ -216,6 +241,7 @@ class HomeReadingCard extends StatelessWidget {
                 final raw = controller.text.trim();
                 final parsed = int.tryParse(raw);
 
+                // Validate numeric input.
                 if (parsed == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Page must be a number.')),
@@ -223,6 +249,7 @@ class HomeReadingCard extends StatelessWidget {
                   return;
                 }
 
+                // Enforce valid page range for this book.
                 if (parsed < 1 || parsed > book.pages) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -250,6 +277,7 @@ class HomeReadingCard extends StatelessWidget {
     const cardBrown = Color(0xFF6B3A19);
     const pillBrown = Color(0xFF8A4A22);
 
+    // Ratio of pages read, used for the progress bar.
     final progress = book.pages > 0
         ? (book.pageProgress / book.pages).clamp(0.0, 1.0)
         : 0.0;
@@ -263,6 +291,7 @@ class HomeReadingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Top row: cover, title/author, and buttons for info + notes.
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -292,7 +321,6 @@ class HomeReadingCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       book.author,
-                      // ignore: deprecated_member_use
                       style: TextStyle(color: Colors.white.withOpacity(0.9)),
                     ),
                     const SizedBox(height: 4),
@@ -335,6 +363,7 @@ class HomeReadingCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
+          // Middle row: +/- buttons, direct page edit and finish button.
           Row(
             children: [
               Row(
@@ -390,10 +419,10 @@ class HomeReadingCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
+          // Bottom: progress label, bar and fraction.
           Text(
             'Progress',
             style: TextStyle(
-              // ignore: deprecated_member_use
               color: Colors.white.withOpacity(0.9),
               fontWeight: FontWeight.w500,
             ),
@@ -424,6 +453,7 @@ class HomeReadingCard extends StatelessWidget {
   }
 }
 
+/// Block showing global statistics about the user's library.
 class LibraryStatsBlock extends StatelessWidget {
   final LibraryStats stats;
 
@@ -446,6 +476,7 @@ class LibraryStatsBlock extends StatelessWidget {
           ),
           child: Column(
             children: [
+              // First row: total books + finished books.
               Row(
                 children: [
                   Expanded(
@@ -479,6 +510,7 @@ class LibraryStatsBlock extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
+              // Second row: currently reading + total pages read.
               Row(
                 children: [
                   Expanded(
@@ -512,6 +544,7 @@ class LibraryStatsBlock extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
+              // Third row: average rating over rated books.
               Row(
                 children: [
                   Expanded(

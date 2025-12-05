@@ -63,7 +63,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
     setState(() {});
   }
 
- Future<void> _changeStatus() async {
+  Future<void> _changeStatus() async {
     final selected = await showModalBottomSheet<Status>(
       context: context,
       builder: (ctx) {
@@ -217,7 +217,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                               color: primary,
                             ),
                       ),
-                      
+
                       const SizedBox(height: 16),
                       Row(
                         children: [
@@ -254,7 +254,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
                           Text(
                             'Tap to change',
                             style: Theme.of(context).textTheme.bodySmall
-                                // ignore: deprecated_member_use
                                 ?.copyWith(color: primary.withOpacity(0.7)),
                           ),
                         ],
@@ -343,8 +342,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
                         ],
                       ),
 
-
-                         
                       const SizedBox(height: 8),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(6),
@@ -392,10 +389,8 @@ class _BookDetailPageState extends State<BookDetailPage> {
       ),
     );
   }
-   
 
-//nick 
-
+  //nick
 
   Widget _buildRatingHistorySection(Color primary) {
     final hasPastRatings = _book.ratingHistory.isNotEmpty;
@@ -436,9 +431,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
               Expanded(
                 flex: 3,
                 child: Text(
-                  dateText.isEmpty
-                      ? ratingText
-                      : '$ratingText  •  $dateText',
+                  dateText.isEmpty ? ratingText : '$ratingText  •  $dateText',
                 ),
               ),
             ],
@@ -447,9 +440,10 @@ class _BookDetailPageState extends State<BookDetailPage> {
       );
     }
 
-    //  2) Current reading 
+    //  2) Current reading
     final shouldShowCurrent =
-        hasCurrentRating || (_book.section == Status.finished && hasCompletionDate);
+        hasCurrentRating ||
+        (_book.section == Status.finished && hasCompletionDate);
 
     if (shouldShowCurrent) {
       final readingIndex = _book.ratingHistory.length + 1;
@@ -459,8 +453,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
 
       String dateText = '';
       if (_book.lastProgressUpdated != null) {
-        dateText =
-            _formatDate(_book.lastProgressUpdated!.toIso8601String());
+        dateText = _formatDate(_book.lastProgressUpdated!.toIso8601String());
       }
 
       String value;
@@ -469,9 +462,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
             ? '${_book.rating}/5'
             : '${_book.rating}/5  •  $dateText';
       } else {
-        value = dateText.isEmpty
-            ? 'No rating'
-            : 'No rating  •  $dateText';
+        value = dateText.isEmpty ? 'No rating' : 'No rating  •  $dateText';
       }
 
       tiles.add(
@@ -486,10 +477,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                   style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
               ),
-              Expanded(
-                flex: 3,
-                child: Text(value),
-              ),
+              Expanded(flex: 3, child: Text(value)),
             ],
           ),
         ),
@@ -513,9 +501,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
               Text(
                 'Reading & rating history',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: primary,
-                    ),
+                  fontWeight: FontWeight.w600,
+                  color: primary,
+                ),
               ),
             ],
           ),
@@ -525,8 +513,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
       ),
     );
   }
-
-
 
   Widget _infoRow(String label, String value) {
     return Padding(

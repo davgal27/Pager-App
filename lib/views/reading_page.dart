@@ -5,6 +5,7 @@ import '../model/book.dart';
 import 'book_detail_page.dart';
 import 'book_notes_page.dart';
 
+/// Screen that lists all books currently in the "Reading" section.
 class ReadingPage extends StatefulWidget {
   const ReadingPage({super.key});
 
@@ -13,18 +14,28 @@ class ReadingPage extends StatefulWidget {
 }
 
 class _ReadingPageState extends State<ReadingPage> {
+  /// Shared controller (singleton) used to access and update book data.
   final PagerController _controller = PagerController.instance;
 
+  /// Future used for the initial load of reading books.
   late Future<List<Book>> _loadFuture;
+
+  /// Local cache of all books in the Reading section.
+  /// Search is always applied on this list.
   List<Book> _allBooks = [];
+
+  /// Current query string from the search field.
   String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
+    // Load all books that are currently in the Reading section.
     _loadFuture = _controller.getReadingBooks();
   }
 
+  /// Returns the list of books filtered by [_searchQuery].
+  /// If there is no query, returns a copy of the full list.
   List<Book> _filteredBooks() {
     if (_searchQuery.trim().isEmpty) {
       return List<Book>.from(_allBooks);
@@ -36,8 +47,13 @@ class _ReadingPageState extends State<ReadingPage> {
     }).toList();
   }
 
+  /// Handles a change of reading progress for [book].
+  ///
+  /// Delegates the real update to [PagerController.setBookProgress],
+  /// then:
+  ///  - asks the controller to build a feedback message if the section changed,
+  ///  - removes the book from the list if it is no longer in "Reading".
   Future<void> _handleProgressChanged(Book book, int newPage) async {
-    // Remember from which section the book started
     final previousSection = book.section;
 
     final ok = await _controller.setBookProgress(book, newPage);
@@ -50,11 +66,11 @@ class _ReadingPageState extends State<ReadingPage> {
       return;
     }
 
-    // Ask controller if this section change should show a message
+    // Ask the controller if this change of section should display a message.
     final message = _controller.buildSectionChangeMessage(
       book,
       previousSection,
-      book.section, // current section after updating progress
+      book.section,
     );
 
     if (message != null) {
@@ -69,8 +85,8 @@ class _ReadingPageState extends State<ReadingPage> {
     }
 
     setState(() {
-      // If the book is no longer in Reading (e.g. moved to Finished),
-      // remove it from the local Reading list.
+      // If the book left the Reading section, remove it from the local list
+      // so that the UI stays consistent with the data model.
       if (book.section != Status.reading) {
         _allBooks.removeWhere((b) => b.id == book.id);
       }
@@ -91,6 +107,7 @@ class _ReadingPageState extends State<ReadingPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Top header bar with the screen title.
               Container(
                 width: double.infinity,
                 color: headerBrown,
@@ -107,6 +124,7 @@ class _ReadingPageState extends State<ReadingPage> {
                 ),
               ),
               const SizedBox(height: 12),
+              // Search field to filter books by title or author.
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: TextField(
@@ -128,23 +146,29 @@ class _ReadingPageState extends State<ReadingPage> {
                 ),
               ),
               const SizedBox(height: 16),
+              // Main content: FutureBuilder loads reading books once,
+              // then we keep them in _allBooks and apply filters locally.
               Expanded(
                 child: FutureBuilder<List<Book>>(
                   future: _loadFuture,
                   builder: (context, snapshot) {
+                    // Initial loading state when no local data yet.
                     if (snapshot.connectionState == ConnectionState.waiting &&
                         _allBooks.isEmpty) {
                       return const Center(child: CircularProgressIndicator());
                     } else if (snapshot.hasError && _allBooks.isEmpty) {
+                      // Initial load failed.
                       return Center(child: Text('Error: ${snapshot.error}'));
                     }
 
+                    // First time we get data, populate the local cache.
                     if (snapshot.hasData && _allBooks.isEmpty) {
                       _allBooks = snapshot.data!;
                     }
 
                     final books = _filteredBooks();
 
+                    // No books at all vs no books matching the current search.
                     if (books.isEmpty) {
                       if (_allBooks.isEmpty) {
                         return const Center(
@@ -157,6 +181,7 @@ class _ReadingPageState extends State<ReadingPage> {
                       }
                     }
 
+                    // List of reading books with cards for each one.
                     return ListView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                       itemCount: books.length,
@@ -165,8 +190,11 @@ class _ReadingPageState extends State<ReadingPage> {
 
                         return ReadingBookCard(
                           book: book,
+                          // When progress changes from the card, delegate to handler.
                           onProgressChanged: (newPage) =>
                               _handleProgressChanged(book, newPage),
+                          // Open detailed info; when returning, remove the book
+                          // if it no longer belongs to the Reading section.
                           onInfoPressed: () async {
                             await Navigator.push(
                               context,
@@ -181,6 +209,7 @@ class _ReadingPageState extends State<ReadingPage> {
                               }
                             });
                           },
+                          // Open notes screen for this book.
                           onNotesPressed: () {
                             Navigator.push(
                               context,
@@ -206,6 +235,8 @@ class _ReadingPageState extends State<ReadingPage> {
   }
 }
 
+/// Card displaying one book in the Reading list,
+/// with progress controls, info access and notes shortcut.
 class ReadingBookCard extends StatelessWidget {
   final Book book;
   final void Function(int newPage) onProgressChanged;
@@ -220,6 +251,8 @@ class ReadingBookCard extends StatelessWidget {
     required this.onNotesPressed,
   });
 
+  /// Opens a dialog to let the user enter an exact page number.
+  /// This avoids having to press + / - many times.
   void _showPageEditDialog(BuildContext context) {
     final controller = TextEditingController(
       text: book.pageProgress.toString(),
@@ -248,6 +281,7 @@ class ReadingBookCard extends StatelessWidget {
                 final raw = controller.text.trim();
                 final parsed = int.tryParse(raw);
 
+                // Basic validation: must be a number.
                 if (parsed == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Page must be a number.')),
@@ -255,6 +289,7 @@ class ReadingBookCard extends StatelessWidget {
                   return;
                 }
 
+                // And must stay within book page bounds.
                 if (parsed < 1 || parsed > book.pages) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -282,6 +317,7 @@ class ReadingBookCard extends StatelessWidget {
     const cardBrown = Color(0xFF6B3A19);
     const pillBrown = Color(0xFF8A4A22);
 
+    /// Progress ratio used for the LinearProgressIndicator.
     final progress = book.pages > 0
         ? (book.pageProgress / book.pages).clamp(0.0, 1.0)
         : 0.0;
@@ -297,6 +333,7 @@ class ReadingBookCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Top row: cover, text info, info + notes buttons.
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -327,7 +364,6 @@ class ReadingBookCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         book.author,
-                        // ignore: deprecated_member_use
                         style: TextStyle(color: Colors.white.withOpacity(0.9)),
                       ),
                       const SizedBox(height: 4),
@@ -345,7 +381,6 @@ class ReadingBookCard extends StatelessWidget {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.info_outline, color: Colors.white),
-                      
                       onPressed: onInfoPressed,
                     ),
                     const SizedBox(height: 44),
@@ -371,6 +406,7 @@ class ReadingBookCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 18),
+            // Middle row: - / current page / + and "Finish" button.
             Row(
               children: [
                 Row(
@@ -426,10 +462,10 @@ class ReadingBookCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
+            // Bottom: progress label, bar and page fraction.
             Text(
               'Progress',
               style: TextStyle(
-                // ignore: deprecated_member_use
                 color: Colors.white.withOpacity(0.9),
                 fontWeight: FontWeight.w500,
               ),

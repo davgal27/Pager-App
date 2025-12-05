@@ -1,22 +1,15 @@
-// lib/views/book_notes_page.dart
-//
-// Screen where the user can attach notes to a single book.
-// Notes are stored on the Book model (book.notes) and persisted using
-// PagerController / Books (user_library.json).
-
 import 'package:flutter/material.dart';
 
 import '../controller/pager_controller.dart';
 import '../model/book.dart';
 
-/// Screen used to view and add notes for a given [Book].
-///
-/// Notes are kept in [book.notes]. This widget edits that list in memory
-/// and asks [PagerController] to persist the book state when it changes.
+/// Screen where the user can attach notes to a single [Book].
+/// Notes are stored in [book.notes] and persisted via [PagerController].
 class BookNotesPage extends StatefulWidget {
+  /// Book for which notes are being created/viewed.
   final Book book;
 
-  /// Initial page pre-filled in the "Page" field when opening the screen.
+  /// Initial page used to pre-fill the "Page" field.
   final int initialPage;
 
   const BookNotesPage({
@@ -30,26 +23,28 @@ class BookNotesPage extends StatefulWidget {
 }
 
 class _BookNotesPageState extends State<BookNotesPage> {
+  /// Shared controller used to persist changes to the book (notes included).
   final PagerController _controller = PagerController.instance;
 
+  /// Text field for the page number of the note.
   final TextEditingController pageController = TextEditingController();
+
+  /// Text field for the note content.
   final TextEditingController noteController = TextEditingController();
 
-  /// Local reference to the notes list of this book.
-  ///
-  /// We keep a direct reference to [widget.book.notes] so any changes here
-  /// are immediately reflected on the book model.
+  /// Local reference to the book's notes list.
+  /// Changes on this list are directly reflected on [widget.book.notes].
   late List<BookNote> _notes;
 
   @override
   void initState() {
     super.initState();
 
-    // Use the current reading page as a default, clamped to valid range.
+    // Use the current reading page as a default, clamped to a valid range.
     final page = widget.initialPage.clamp(1, widget.book.pages);
     pageController.text = page.toString();
 
-    // Attach to the book's notes list.
+    // Attach to the book's notes list (no copy, same underlying list).
     _notes = widget.book.notes;
   }
 
@@ -60,13 +55,15 @@ class _BookNotesPageState extends State<BookNotesPage> {
     super.dispose();
   }
 
+  /// Helper to show a short message at the bottom of the screen.
   void _showSnack(String message) {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  /// Persist the whole book (including notes).
+  /// Persist the current state of [widget.book] (including notes)
+  /// to user_library.json via [PagerController].
   Future<void> _persistNotes() async {
     final ok = await _controller.saveBook(widget.book);
     if (!ok && mounted) {
@@ -74,11 +71,12 @@ class _BookNotesPageState extends State<BookNotesPage> {
     }
   }
 
-  /// Validate input and add a new note to the book, then persist.
+  /// Validate the form, add a new [BookNote] to the book, and persist.
   Future<void> _addNote() async {
     final rawPage = pageController.text.trim();
     final text = noteController.text.trim();
 
+    // Basic validation of page and content.
     if (rawPage.isEmpty) {
       _showSnack('Please enter a page number.');
       return;
@@ -100,6 +98,7 @@ class _BookNotesPageState extends State<BookNotesPage> {
       return;
     }
 
+    // Create a new note with the current timestamp.
     final newNote = BookNote(
       page: parsedPage,
       text: text,
@@ -107,7 +106,7 @@ class _BookNotesPageState extends State<BookNotesPage> {
     );
 
     setState(() {
-      // Insert at the top so the newest note appears first.
+      // Insert at the top so the newest note appears first in the list.
       _notes.insert(0, newNote);
       noteController.clear();
     });
@@ -115,6 +114,7 @@ class _BookNotesPageState extends State<BookNotesPage> {
     await _persistNotes();
   }
 
+  /// Remove a note from the list and persist the change.
   Future<void> _deleteNote(BookNote note) async {
     setState(() {
       _notes.remove(note);
@@ -123,6 +123,7 @@ class _BookNotesPageState extends State<BookNotesPage> {
     await _persistNotes();
   }
 
+  /// Open a dialog to show the full content of a note.
   void _openNote(BookNote note) {
     showDialog<void>(
       context: context,
@@ -159,6 +160,7 @@ class _BookNotesPageState extends State<BookNotesPage> {
       appBar: AppBar(
         backgroundColor: headerBrown,
         foregroundColor: Colors.white,
+        // Show the book title in the app bar for context.
         title: Text(widget.book.title),
       ),
       body: SafeArea(
@@ -167,6 +169,7 @@ class _BookNotesPageState extends State<BookNotesPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Section: note creation form.
               Text(
                 'Add a note',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -200,7 +203,6 @@ class _BookNotesPageState extends State<BookNotesPage> {
                     Text(
                       '1 – ${widget.book.pages} (defaults to current page)',
                       style: TextStyle(
-                        // ignore: deprecated_member_use
                         color: headerBrown.withOpacity(0.7),
                         fontSize: 12,
                       ),
@@ -243,7 +245,7 @@ class _BookNotesPageState extends State<BookNotesPage> {
 
               const SizedBox(height: 24),
 
-              // Existing notes list.
+              // Section: existing notes list.
               Text(
                 'Notes',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -280,6 +282,7 @@ class _BookNotesPageState extends State<BookNotesPage> {
                         borderRadius: BorderRadius.circular(18),
                       ),
                       child: ListTile(
+                        // Tap to open a dialog with full note text.
                         onTap: () => _openNote(note),
                         leading: const Icon(Icons.sticky_note_2_outlined),
                         title: Text('Page ${note.page}'),
