@@ -37,8 +37,12 @@ class _ReadingPageState extends State<ReadingPage> {
   }
 
   Future<void> _handleProgressChanged(Book book, int newPage) async {
+    // Remember from which section the book started
+    final previousSection = book.section;
+
     final ok = await _controller.setBookProgress(book, newPage);
     if (!mounted) return;
+
     if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Could not update progress.')),
@@ -46,7 +50,27 @@ class _ReadingPageState extends State<ReadingPage> {
       return;
     }
 
+    // Ask controller if this section change should show a message
+    final message = _controller.buildSectionChangeMessage(
+      book,
+      previousSection,
+      book.section, // current section after updating progress
+    );
+
+    if (message != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+
     setState(() {
+      // If the book is no longer in Reading (e.g. moved to Finished),
+      // remove it from the local Reading list.
       if (book.section != Status.reading) {
         _allBooks.removeWhere((b) => b.id == book.id);
       }

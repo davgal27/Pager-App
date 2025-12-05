@@ -37,6 +37,10 @@ class _ToReadPageState extends State<ToReadPage> {
   }
 
   Future<void> _moveToReading(Book book) async {
+    // 1️⃣ Κρατάμε από ποιο section ξεκινάει
+    final previousSection = book.section;
+
+    // 2️⃣ Προσπαθούμε να το στείλουμε στο Reading
     final ok = await _controller.changeSection(book, Status.reading);
     if (!mounted) return;
 
@@ -47,11 +51,31 @@ class _ToReadPageState extends State<ToReadPage> {
       return;
     }
 
+    // 3️⃣ Ρωτάμε τον controller αν πρέπει να δείξουμε μήνυμα
+    final message = _controller.buildSectionChangeMessage(
+      book,
+      previousSection,
+      Status.reading,
+    );
+
+    // 4️⃣ Αν έχει μήνυμα, δείχνουμε πράσινο SnackBar
+    if (message != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+
+    // 5️⃣ Βγάζουμε το βιβλίο από τη λίστα "To read"
     setState(() {
-      // το βγάζουμε από τη λίστα To read
       _allBooks.removeWhere((b) => b.id == book.id);
     });
   }
+
 
   @override
   Widget build(BuildContext context) {

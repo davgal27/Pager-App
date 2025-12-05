@@ -18,6 +18,8 @@ class _BookDetailPageState extends State<BookDetailPage> {
   final PagerController _controller = PagerController.instance;
   late Book _book;
 
+  bool _showHistory = false;
+
   @override
   void initState() {
     super.initState();
@@ -61,7 +63,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
     setState(() {});
   }
 
-  Future<void> _changeStatus() async {
+ Future<void> _changeStatus() async {
     final selected = await showModalBottomSheet<Status>(
       context: context,
       builder: (ctx) {
@@ -90,8 +92,30 @@ class _BookDetailPageState extends State<BookDetailPage> {
 
     if (selected == null || selected == _book.section) return;
 
+    // 👉 Κρατάμε από ποιο status ξεκίνησε
+    final previousSection = _book.section;
+
     final ok = await _controller.changeSection(_book, selected);
     if (!mounted || !ok) return;
+
+    // 👉 Ρωτάμε τον controller τι μήνυμα πρέπει να δείξουμε
+    final message = _controller.buildSectionChangeMessage(
+      _book,
+      previousSection,
+      selected,
+    );
+
+    if (message != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+
     setState(() {});
   }
 
@@ -193,6 +217,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                               color: primary,
                             ),
                       ),
+                      
                       const SizedBox(height: 16),
                       Row(
                         children: [
@@ -266,7 +291,40 @@ class _BookDetailPageState extends State<BookDetailPage> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 8),
+
+                      // 🔹 Κουμπί εμφάνισης ιστορικού – μόνο αν το βιβλίο έχει διαβαστεί > 1 φορά
+                      if (_book.completedReadings > 1)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                _showHistory = !_showHistory;
+                              });
+                            },
+                            icon: Icon(
+                              _showHistory
+                                  ? Icons.expand_less
+                                  : Icons.expand_more,
+                              size: 18,
+                            ),
+                            label: Text(
+                              _showHistory
+                                  ? 'Hide rating history'
+                                  : 'Show rating history',
+                            ),
+                          ),
+                        ),
+
+                      // 🔹 Το κουτί με το ιστορικό εμφανίζεται μόνο όταν το toggle είναι true
+                      if (_showHistory) ...[
+                        const SizedBox(height: 8),
+                        _buildRatingHistorySection(primary),
+                      ],
+
                       const SizedBox(height: 16),
+
                       Row(
                         children: [
                           Text(
@@ -284,6 +342,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
                           ),
                         ],
                       ),
+
+
+                         
                       const SizedBox(height: 8),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(6),
@@ -331,6 +392,141 @@ class _BookDetailPageState extends State<BookDetailPage> {
       ),
     );
   }
+   
+
+//nick 
+
+
+  Widget _buildRatingHistorySection(Color primary) {
+    final hasPastRatings = _book.ratingHistory.isNotEmpty;
+    final hasCurrentRating = _book.rating > 0;
+    final hasCompletionDate = _book.lastProgressUpdated != null;
+
+    // Αν δεν υπάρχει ούτε προηγούμενο rating,
+    // ούτε τρέχον rating, ούτε ημερομηνία completion -> μην δείχνεις τίποτα.
+    if (!hasPastRatings && !hasCurrentRating && !hasCompletionDate) {
+      return const SizedBox.shrink();
+    }
+
+    final tiles = <Widget>[];
+
+    // 🔹 1) Past ratings (αυτά που μπήκαν στο history μέσω startReread)
+    for (var i = 0; i < _book.ratingHistory.length; i++) {
+      final rating = _book.ratingHistory[i];
+      String dateText = '';
+      if (i < _book.ratingHistoryDates.length) {
+        dateText = _formatDate(_book.ratingHistoryDates[i]);
+      }
+
+      // Αν rating == 0, το δείχνουμε σαν "No rating"
+      final ratingText = rating == 0 ? 'No rating' : '$rating/5';
+
+      tiles.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: Text(
+                  'Reading ${i + 1}:',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
+              Expanded(
+                flex: 3,
+                child: Text(
+                  dateText.isEmpty
+                      ? ratingText
+                      : '$ratingText  •  $dateText',
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    //  2) Current reading 
+    final shouldShowCurrent =
+        hasCurrentRating || (_book.section == Status.finished && hasCompletionDate);
+
+    if (shouldShowCurrent) {
+      final readingIndex = _book.ratingHistory.length + 1;
+      final label = _book.section == Status.finished
+          ? 'Reading $readingIndex (current):'
+          : 'Current reading:';
+
+      String dateText = '';
+      if (_book.lastProgressUpdated != null) {
+        dateText =
+            _formatDate(_book.lastProgressUpdated!.toIso8601String());
+      }
+
+      String value;
+      if (_book.rating > 0) {
+        value = dateText.isEmpty
+            ? '${_book.rating}/5'
+            : '${_book.rating}/5  •  $dateText';
+      } else {
+        value = dateText.isEmpty
+            ? 'No rating'
+            : 'No rating  •  $dateText';
+      }
+
+      tiles.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: Text(
+                  label,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
+              Expanded(
+                flex: 3,
+                child: Text(value),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1E4D4),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.history, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'Reading & rating history',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: primary,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ...tiles,
+        ],
+      ),
+    );
+  }
+
+
 
   Widget _infoRow(String label, String value) {
     return Padding(

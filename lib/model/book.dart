@@ -47,8 +47,24 @@ class Book {
   /// Current page the user is at for this book.
   int pageProgress;
 
-  /// Rating from 1–5 (0 = not rated yet).
+  /// Rating from 1–5 for the *current* completed reading.
+  /// 0 means "not rated yet".
   int rating;
+
+  /// Ratings of previous completed readings.
+ 
+  List<int> ratingHistory;
+
+   /// The i-th date corresponds to the i-th rating in [ratingHistory].
+  /// Stored as strings to keep JSON encoding simple.
+  List<String> ratingHistoryDates;
+
+  /// How many times this book has been fully completed (finished).
+  ///
+  /// This is used to calculate overall "pages read" statistics
+  /// on the Home screen. Each completed reading contributes
+  /// [pages] to the total.
+  int completedReadings;
 
   /// Short description shown on detail screens.
   String description;
@@ -79,17 +95,48 @@ class Book {
     required this.pages,
     this.pageProgress = 0,
     this.rating = 0,
+    List<int>? ratingHistory,
+    List<String>? ratingHistoryDates,  
+    this.completedReadings = 0,
     this.description = "",
     this.inLibrary = true,
     this.section = Status.toread,
     this.coverAsset = '',
     List<BookNote>? notes,
     this.lastProgressUpdated,
-  }) : notes = notes ?? <BookNote>[];
+  })  : ratingHistory = ratingHistory ?? <int>[],
+        ratingHistoryDates = ratingHistoryDates ?? <String>[],
+        notes = notes ?? <BookNote>[];
 
   /// Build a Book from a JSON map (as loaded from user_library.json).
   factory Book.fromJson(Map<String, dynamic> json) {
     final notesJson = json['notes'] as List<dynamic>?;
+    final ratingHistoryJson = json['ratingHistory'] as List<dynamic>?;
+    final ratingHistoryDatesJson =
+        json['ratingHistoryDates'] as List<dynamic>?;
+
+    final pages = json['pages'] as int? ?? 0;
+    final pageProgress = (json['pageProgress'] ?? 0) as int;
+
+    // Determine the section (for compatibility with older JSON).
+    final sectionIndex = json['section'] as int? ?? Status.toread.index;
+    final section = Status.values[sectionIndex];
+
+    // Derive completedReadings if it does not exist yet in the JSON.
+    int completedReadings;
+    if (json.containsKey('completedReadings')) {
+      completedReadings = json['completedReadings'] as int? ?? 0;
+    } else {
+      // For older data:
+      // - If the book is already finished, or
+      // - progress has reached the last page,
+      // we assume it has been completed once.
+      if (section == Status.finished || (pages > 0 && pageProgress >= pages)) {
+        completedReadings = 1;
+      } else {
+        completedReadings = 0;
+      }
+    }
 
     return Book(
       id: json['id'] as int,
@@ -98,20 +145,25 @@ class Book {
       publisher: json['publisher'] as String,
       datePublished: json['datePublished'] as String,
       genre: json['genre'] as String,
-      pages: json['pages'] as int,
-      pageProgress: (json['pageProgress'] ?? 0) as int,
+      pages: pages,
+      pageProgress: pageProgress,
       rating: (json['rating'] ?? 0) as int,
+      ratingHistory: ratingHistoryJson != null
+          ? ratingHistoryJson.whereType<int>().toList()
+          : <int>[],
+      ratingHistoryDates: ratingHistoryDatesJson != null
+          ? ratingHistoryDatesJson.whereType<String>().toList()
+          : <String>[],
+      completedReadings: completedReadings,
       description: json['description'] as String? ?? "",
       inLibrary: (json['inLibrary'] ?? true) as bool,
-      section: json.containsKey('section')
-          ? Status.values[json['section'] as int]
-          : Status.toread,
+      section: section,
       coverAsset: json['coverAsset'] as String? ?? '',
       notes: notesJson != null
           ? notesJson
-                .whereType<Map<String, dynamic>>()
-                .map(BookNote.fromJson)
-                .toList()
+              .whereType<Map<String, dynamic>>()
+              .map(BookNote.fromJson)
+              .toList()
           : <BookNote>[],
       lastProgressUpdated: json['lastProgressUpdated'] != null
           ? DateTime.tryParse(json['lastProgressUpdated'] as String)
@@ -131,6 +183,9 @@ class Book {
       'pages': pages,
       'pageProgress': pageProgress,
       'rating': rating,
+      'ratingHistory': ratingHistory,
+      'ratingHistoryDates': ratingHistoryDates,
+      'completedReadings': completedReadings,
       'description': description,
       'inLibrary': inLibrary,
       'section': section.index,

@@ -22,10 +22,11 @@ class _FinishedPageState extends State<FinishedPage> {
   @override
   void initState() {
     super.initState();
-    // Φορτώνουμε όλα τα βιβλία και κρατάμε μόνο τα finished.
+    // Load all library books once and keep only finished books in memory.
     _loadFuture = _controller.getLibraryBooks();
   }
 
+  /// Returns finished books filtered by the current search query.
   List<Book> _filteredBooks() {
     final base = _allBooks;
     if (_searchQuery.trim().isEmpty) return List<Book>.from(base);
@@ -51,7 +52,7 @@ class _FinishedPageState extends State<FinishedPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
+              // Header bar
               Container(
                 width: double.infinity,
                 color: headerBrown,
@@ -68,7 +69,7 @@ class _FinishedPageState extends State<FinishedPage> {
                 ),
               ),
 
-              // Search
+              // Search bar
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: TextField(
@@ -89,30 +90,38 @@ class _FinishedPageState extends State<FinishedPage> {
               ),
               const SizedBox(height: 16),
 
-              // List
+              // List of finished books
               Expanded(
                 child: FutureBuilder<List<Book>>(
                   future: _loadFuture,
                   builder: (context, snapshot) {
+                    // Initial loading: no cached books yet.
                     if (snapshot.connectionState == ConnectionState.waiting &&
                         _allBooks.isEmpty) {
                       return const Center(child: CircularProgressIndicator());
                     }
+
+                    // Initial error state.
                     if (snapshot.hasError && _allBooks.isEmpty) {
                       return Center(
                         child: Text('Error: ${snapshot.error}'),
                       );
                     }
 
+                    // First successful load: cache only finished books.
                     if (snapshot.hasData && _allBooks.isEmpty) {
-                      // Κρατάμε μόνο τα finished από την βιβλιοθήκη
                       _allBooks = snapshot.data!
-                          .where((b) => b.inLibrary && b.section == Status.finished)
+                          .where(
+                            (b) =>
+                                b.inLibrary &&
+                                b.section == Status.finished,
+                          )
                           .toList();
                     }
 
                     final books = _filteredBooks();
 
+                    // Empty states depending on library / search.
                     if (books.isEmpty) {
                       if (_allBooks.isEmpty) {
                         return const Center(
@@ -125,6 +134,7 @@ class _FinishedPageState extends State<FinishedPage> {
                       }
                     }
 
+                    // Normal list view.
                     return ListView.builder(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -133,10 +143,12 @@ class _FinishedPageState extends State<FinishedPage> {
                       itemCount: books.length,
                       itemBuilder: (context, index) {
                         final book = books[index];
+
                         return FinishedBookCard(
                           book: book,
                           onRatePressed: (starIndex) async {
-                            final ok = await _controller.updateRating(book, starIndex);
+                            final ok =
+                                await _controller.updateRating(book, starIndex);
                             if (!mounted) return;
                             if (!ok) {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -146,7 +158,8 @@ class _FinishedPageState extends State<FinishedPage> {
                               );
                               return;
                             }
-                            setState(() {}); // book.rating 
+                            // Rebuild to reflect the new rating.
+                            setState(() {});
                           },
                           onInfoPressed: () {
                             Navigator.push(
@@ -167,7 +180,49 @@ class _FinishedPageState extends State<FinishedPage> {
                               ),
                             );
                           },
+                          onRereadPressed: () async {
+                          // Remember from which section the book started (should be Finished)
+                          final previousSection = book.section;
+
+                          final ok = await _controller.startReread(book);
+                          if (!mounted) return;
+
+                          if (!ok) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Could not start rereading.'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          // Ask controller if this section change should show a message
+                          final message = _controller.buildSectionChangeMessage(
+                            book,
+                            previousSection,
+                            book.section, // after startReread this should be Status.reading
+                          );
+
+                          if (message != null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(message),
+                                backgroundColor: Colors.green,
+                                behavior: SnackBarBehavior.floating,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
+
+                          // The book is now in the Reading section, so remove it
+                          // from the local Finished list.
+                          setState(() {
+                            _allBooks.removeWhere((b) => b.id == book.id);
+                          });
+                        },
+
                         );
+
                       },
                     );
                   },
@@ -188,16 +243,29 @@ class FinishedBookCard extends StatelessWidget {
     required this.onRatePressed,
     required this.onInfoPressed,
     required this.onNotesPressed,
+    required this.onRereadPressed,
   });
 
   final Book book;
   final void Function(int starIndex) onRatePressed;
   final VoidCallback onInfoPressed;
   final VoidCallback onNotesPressed;
+  final VoidCallback onRereadPressed;
 
   @override
   Widget build(BuildContext context) {
     const cardBrown = Color(0xFF6B3A19);
+
+    // Number of times this book has been fully completed.
+    // If the data is older and completedReadings is still 0,
+    // treat a finished book as at least one read.
+   
+    final totalReads = book.completedReadings > 0 ? book.completedReadings : 1;
+
+
+    //final totalReads = totalReadsFromRatings > 0
+      //  ? totalReadsFromRatings
+        //: (book.completedReadings > 0 ? book.completedReadings : 1);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12.0),
@@ -210,11 +278,11 @@ class FinishedBookCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Πάνω μέρος: εξώφυλλο + τίτλος/author + κουμπιά
+            // Top section: cover + title/author/pages + actions.
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Cover μικρότερο
+                // Book cover (small thumbnail).
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Image.asset(
@@ -226,7 +294,7 @@ class FinishedBookCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
 
-                // Τίτλος / author / pages
+                // Title / author / pages / total reads / past ratings.
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,13 +330,24 @@ class FinishedBookCard extends StatelessWidget {
                           fontSize: 11,
                         ),
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Read $totalReads time${totalReads == 1 ? '' : 's'}',
+                        style: const TextStyle(
+                          color: Colors.white60,
+                          fontSize: 11,
+                        ),
+                      ),
+                      
+                        
+                      
                     ],
                   ),
                 ),
 
                 const SizedBox(width: 8),
 
-                // Δεξιά: Info + Notes
+                // Right column: Info + Notes + Reread buttons.
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -299,8 +378,29 @@ class FinishedBookCard extends StatelessWidget {
                         textStyle: const TextStyle(fontSize: 12),
                       ),
                       onPressed: onNotesPressed,
-                      icon: const Icon(Icons.sticky_note_2_outlined, size: 16),
+                      icon: const Icon(
+                        Icons.sticky_note_2_outlined,
+                        size: 16,
+                      ),
                       label: const Text('Notes'),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.amberAccent,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        visualDensity: VisualDensity.compact,
+                        textStyle: const TextStyle(fontSize: 12),
+                      ),
+                      onPressed: onRereadPressed,
+                      icon: const Icon(
+                        Icons.refresh,
+                        size: 16,
+                      ),
+                      label: const Text('Reread'),
                     ),
                   ],
                 ),
@@ -309,10 +409,10 @@ class FinishedBookCard extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            //RATING
+            // Rating row (interactive stars for the current reading).
             Row(
               children: List.generate(5, (i) {
-                final filled = (i + 1) <= (book.rating);
+                final filled = (i + 1) <= book.rating;
                 return IconButton(
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(
