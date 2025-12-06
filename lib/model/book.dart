@@ -1,4 +1,4 @@
-// AUTHOR: ALL THE TEAM
+// AUTHORS : ALL THE TEAM
 
 // lib/model/book.dart
 //
