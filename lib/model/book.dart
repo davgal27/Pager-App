@@ -1,3 +1,5 @@
+// AUTHOR: ALL THE TEAM
+
 // lib/model/book.dart
 //
 // Core data models used in the Pager app.
