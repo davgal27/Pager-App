@@ -365,7 +365,7 @@ class PagerController {
         target.completedReadings = target.completedReadings + 1;
       }
 
-      /// ✅ ΝΕΟ: πότε ολοκληρώθηκε αυτό το reading
+      /// When the user finishes the book, record the time so Home can show it as the last book read.
       final now = DateTime.now();
       target.lastProgressUpdated = now;
       book.lastProgressUpdated = now;
@@ -427,7 +427,7 @@ class PagerController {
         target.completedReadings = target.completedReadings + 1;
       }
 
-      /// ✅ ΝΕΟ: completion date και όταν αλλάζουμε με το χέρι σε Finished
+      /// When the book is set to Finished (even manually), record the completion time.
       final now = DateTime.now();
       target.lastProgressUpdated = now;
       book.lastProgressUpdated = now;
