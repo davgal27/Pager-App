@@ -1,4 +1,4 @@
-// AUTHORS : ALL THE TEAM
+/// AUTHORS : ALL THE TEAM
 
 import 'dart:convert';
 import 'dart:io';
@@ -174,7 +174,7 @@ class PagerController {
     target.inLibrary = true;
 
     if (!alreadyInLibrary) {
-      // New book in library starts in "To Read" with zero progress.
+      /// New book in library starts in "To Read" with zero progress.
       target.section = Status.toread;
       target.pageProgress = 0;
     }
@@ -307,10 +307,10 @@ class PagerController {
     final readingCount = reading.length;
     final finishedCount = finished.length;
 
-    // Total pages read across the whole library.
-    // We count:
-    //  - [completedReadings] * [pages] for fully finished rereads,
-    //  - plus the current in-progress pages for books in [Status.reading].
+    /// Total pages read across the whole library.
+    /// We count:
+    ///  - [completedReadings] * [pages] for fully finished rereads,
+    ///  - plus the current in-progress pages for books in [Status.reading].
     final totalPagesRead = libraryBooks.fold<int>(0, (sum, b) {
       final pages = b.pages;
 
@@ -321,7 +321,7 @@ class PagerController {
       return sum + completedPages + currentProgress;
     });
 
-    // Average rating is computed only from books that currently have a rating > 0.
+    /// Average rating is computed only from books that currently have a rating > 0.
     final rated = libraryBooks.where((b) => b.rating > 0).toList();
     double averageRating = 0;
     if (rated.isNotEmpty) {
@@ -349,28 +349,28 @@ class PagerController {
     final target = books[index];
     final previousSection = target.section;
 
-    // Clamp the new page within a valid range.
+    /// Clamp the new page within a valid range.
     final clamped = newPage.clamp(1, target.pages);
     target.pageProgress = clamped;
     book.pageProgress = clamped;
 
     if (clamped >= target.pages) {
-      // User reached (or passed) the last page: mark as finished.
+      /// User reached (or passed) the last page: mark as finished.
       target.pageProgress = target.pages;
       target.section = Status.finished;
 
-      // Count a new completed reading only when transitioning
-      // from a non-finished state into finished.
+      /// Count a new completed reading only when transitioning
+      /// from a non-finished state into finished.
       if (previousSection != Status.finished) {
         target.completedReadings = target.completedReadings + 1;
       }
 
-      // ✅ ΝΕΟ: πότε ολοκληρώθηκε αυτό το reading
+      /// ✅ ΝΕΟ: πότε ολοκληρώθηκε αυτό το reading
       final now = DateTime.now();
       target.lastProgressUpdated = now;
       book.lastProgressUpdated = now;
     } else if (target.section == Status.toread && clamped > 0) {
-      // First time advancing progress from 0: move into Reading.
+      /// First time advancing progress from 0: move into Reading.
       target.section = Status.reading;
     }
 
@@ -416,23 +416,23 @@ class PagerController {
     target.section = newStatus;
 
     if (newStatus == Status.toread) {
-      // Move back to "To Read": reset progress.
+      /// Move back to "To Read": reset progress.
       target.pageProgress = 0;
     } else if (newStatus == Status.finished) {
-      // Force progress to the last page.
+      /// Force progress to the last page.
       target.pageProgress = target.pages;
 
-      // If we have just transitioned into Finished, count a completion.
+      /// If we have just transitioned into Finished, count a completion.
       if (previousSection != Status.finished) {
         target.completedReadings = target.completedReadings + 1;
       }
 
-      // ✅ ΝΕΟ: completion date και όταν αλλάζουμε με το χέρι σε Finished
+      /// ✅ ΝΕΟ: completion date και όταν αλλάζουμε με το χέρι σε Finished
       final now = DateTime.now();
       target.lastProgressUpdated = now;
       book.lastProgressUpdated = now;
     } else if (newStatus == Status.reading) {
-      // Ensure we start from a valid page when moving into Reading.
+      /// Ensure we start from a valid page when moving into Reading.
       if (target.pageProgress <= 0 || target.pageProgress >= target.pages) {
         target.pageProgress = 1;
       }
@@ -459,9 +459,9 @@ class PagerController {
 
     final target = books[index];
 
-    // If there is a current rating, append it to the history
-    // before starting a fresh reading. We also store a timestamp
-    // so we can later show when this reading was completed.
+    /// If there is a current rating, append it to the history
+    /// before starting a fresh reading. We also store a timestamp
+    /// so we can later show when this reading was completed.
     final nowIso = (target.lastProgressUpdated ?? DateTime.now())
         .toIso8601String();
 
@@ -470,13 +470,13 @@ class PagerController {
     target.ratingHistoryDates =
         List<String>.from(target.ratingHistoryDates)..add(nowIso);
 
-    // Start a new reading from the beginning.
+    /// Start a new reading from the beginning.
     target.section = Status.reading;
     target.pageProgress = target.pages > 0 ? 1 : 0;
     target.rating = 0;
     _lastReadingBookId = target.id;
 
-    // Reflect the changes back to the UI instance.
+    /// Reflect the changes back to the UI instance.
     book.section = target.section;
     book.pageProgress = target.pageProgress;
     book.rating = target.rating;
@@ -499,14 +499,14 @@ class PagerController {
     return true;
   }
 
-    // Βάλε το μέσα στην κλάση PagerController
+    /// Βάλε το μέσα στην κλάση PagerController
   String? buildSectionChangeMessage(Book book, Status previous, Status current) {
-    // To read -> Reading
+    /// To read -> Reading
     if (previous == Status.toread && current == Status.reading) {
       return '"${book.title}" moved to Reading shelf.';
     }
 
-    // Reading -> Finished
+    /// Reading -> Finished
     if (previous == Status.reading && current == Status.finished) {
       return '"${book.title}" moved to Finished shelf.';
     }
@@ -515,12 +515,12 @@ class PagerController {
       return '"${book.title}" moved to Reading shelf.';
     }
 
-    // Finished -> To read
+    /// Finished -> To read
     if (previous == Status.finished && current == Status.toread) {
       return '"${book.title}" moved to To read shelf.';
     }
 
-    // Άλλες αλλαγές δεν μας ενδιαφέρουν προς το παρόν
+    /// Άλλες αλλαγές δεν μας ενδιαφέρουν προς το παρόν
     return null;
   }
 
