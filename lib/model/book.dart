@@ -1,8 +1,8 @@
-// AUTHORS : ALL THE TEAM
+/// AUTHORS : ALL THE TEAM
 
-// lib/model/book.dart
-//
-// Core data models used in the Pager app.
+/// lib/model/book.dart
+///
+/// Core data models used in the Pager app.
 
 /// Represents which list / shelf the book belongs to.
 enum Status { toread, reading, finished }
@@ -120,19 +120,19 @@ class Book {
     final pages = json['pages'] as int? ?? 0;
     final pageProgress = (json['pageProgress'] ?? 0) as int;
 
-    // Determine the section (for compatibility with older JSON).
+    /// Determine the section (for compatibility with older JSON).
     final sectionIndex = json['section'] as int? ?? Status.toread.index;
     final section = Status.values[sectionIndex];
 
-    // Derive completedReadings if it does not exist yet in the JSON.
+    /// Derive completedReadings if it does not exist yet in the JSON.
     int completedReadings;
     if (json.containsKey('completedReadings')) {
       completedReadings = json['completedReadings'] as int? ?? 0;
     } else {
-      // For older data:
-      // - If the book is already finished, or
-      // - progress has reached the last page,
-      // we assume it has been completed once.
+      /// For older data:
+      /// - If the book is already finished, or
+      /// - progress has reached the last page,
+      /// we assume it has been completed once.
       if (section == Status.finished || (pages > 0 && pageProgress >= pages)) {
         completedReadings = 1;
       } else {
