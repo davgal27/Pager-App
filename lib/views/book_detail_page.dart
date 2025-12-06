@@ -1,4 +1,4 @@
-// AUTHORS: LUCAS LABHINI XLABHIL00 && NIKOLAS PAPADAKIS XPAPADN00
+/// AUTHORS : LUCAS LABHINI (XLABHIL00) && NIKOLAS PAPADAKIS (XPAPADN00)
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
