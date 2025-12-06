@@ -4,6 +4,7 @@ import '../controller/pager_controller.dart';
 import '../model/book.dart';
 import 'book_detail_page.dart';
 
+// Screen that shows all books in the "To read" section.
 class ToReadPage extends StatefulWidget {
   const ToReadPage({super.key});
 
@@ -12,8 +13,11 @@ class ToReadPage extends StatefulWidget {
 }
 
 class _ToReadPageState extends State<ToReadPage> {
+
+  // Shared controller used to access and update book data.
   final PagerController _controller = PagerController.instance;
 
+  // Future that loads all books from the library.
   late Future<List<Book>> _loadFuture;
   List<Book> _allBooks = [];
   String _searchQuery = '';
@@ -21,7 +25,7 @@ class _ToReadPageState extends State<ToReadPage> {
   @override
   void initState() {
     super.initState();
-    // Φορτώνουμε όλα τα βιβλία της βιβλιοθήκης
+    // Load all library books once.
     _loadFuture = _controller.getLibraryBooks();
   }
 
@@ -36,11 +40,12 @@ class _ToReadPageState extends State<ToReadPage> {
     }).toList();
   }
 
+  // Move a book from "To read" to "Reading".
   Future<void> _moveToReading(Book book) async {
-    // 1️⃣ Κρατάμε από ποιο section ξεκινάει
+    // Keep track of the section the book started from
     final previousSection = book.section;
 
-    // 2️⃣ Προσπαθούμε να το στείλουμε στο Reading
+    //  Try to move it to Reading
     final ok = await _controller.changeSection(book, Status.reading);
     if (!mounted) return;
 
@@ -51,14 +56,14 @@ class _ToReadPageState extends State<ToReadPage> {
       return;
     }
 
-    // 3️⃣ Ρωτάμε τον controller αν πρέπει να δείξουμε μήνυμα
+    //  Ask the controller if we should show a message
     final message = _controller.buildSectionChangeMessage(
       book,
       previousSection,
       Status.reading,
     );
 
-    // 4️⃣ Αν έχει μήνυμα, δείχνουμε πράσινο SnackBar
+    //  If there is a message, show a green SnackBar
     if (message != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -70,7 +75,7 @@ class _ToReadPageState extends State<ToReadPage> {
       );
     }
 
-    // 5️⃣ Βγάζουμε το βιβλίο από τη λίστα "To read"
+    //  Remove the book from the "To read" list
     setState(() {
       _allBooks.removeWhere((b) => b.id == book.id);
     });
@@ -109,7 +114,7 @@ class _ToReadPageState extends State<ToReadPage> {
               ),
               const SizedBox(height: 12),
 
-              // Search
+              // Search bar to filter books
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: TextField(
@@ -130,7 +135,7 @@ class _ToReadPageState extends State<ToReadPage> {
               ),
               const SizedBox(height: 16),
 
-              // Λίστα βιβλίων
+              // List of books
               Expanded(
                 child: FutureBuilder<List<Book>>(
                   future: _loadFuture,
@@ -224,7 +229,7 @@ class ToReadBookCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cover
+            // book Cover
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Image.asset(
@@ -241,7 +246,7 @@ class ToReadBookCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title + Info button top-right
+                  // Title and  Info button top-right
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -294,6 +299,7 @@ class ToReadBookCard extends StatelessWidget {
                           ),
                           visualDensity: VisualDensity.compact,
                         ),
+                        
                         child: const Text(
                           'Start reading',
                           textAlign: TextAlign.center,

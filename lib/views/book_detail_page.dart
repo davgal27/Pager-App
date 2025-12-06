@@ -5,6 +5,8 @@ import '../controller/pager_controller.dart';
 import '../model/book.dart';
 import 'book_notes_page.dart';
 
+
+// Screen that shows detailed information about a single [Book].
 class BookDetailPage extends StatefulWidget {
   final Book book;
 
@@ -14,7 +16,9 @@ class BookDetailPage extends StatefulWidget {
   State<BookDetailPage> createState() => _BookDetailPageState();
 }
 
+
 class _BookDetailPageState extends State<BookDetailPage> {
+  // Shared controller used to update and read book data.
   final PagerController _controller = PagerController.instance;
   late Book _book;
 
@@ -23,6 +27,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
   @override
   void initState() {
     super.initState();
+    // Keep a local copy of the passed-in book for easier access.
     _book = widget.book;
   }
 
@@ -45,7 +50,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
         return Colors.blue[100]!;
     }
   }
-
+  // Returns a label for the given [Status].
   String _statusLabel(Status status) {
     switch (status) {
       case Status.toread:
@@ -57,12 +62,14 @@ class _BookDetailPageState extends State<BookDetailPage> {
     }
   }
 
+  // Handles a tap on a rating star
   Future<void> _onStarTapped(int starIndex) async {
     final ok = await _controller.updateRating(_book, starIndex);
     if (!mounted || !ok) return;
     setState(() {});
   }
 
+  // Change the book status
   Future<void> _changeStatus() async {
     final selected = await showModalBottomSheet<Status>(
       context: context,
@@ -119,6 +126,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
     setState(() {});
   }
 
+  // Open the notes page for this book
   void _openNotes() {
     Navigator.push(
       context,
@@ -135,6 +143,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
     const background = Color(0xFFF5F0E8);
     const cardBackground = Color(0xFFF7EFE3);
 
+    // Reading progress ratio used for the progress bar.
     final progress = _book.pages > 0
         ? (_book.pageProgress / _book.pages).clamp(0.0, 1.0)
         : 0.0;
@@ -199,6 +208,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                   ],
                 ),
                 const SizedBox(height: 24),
+                // Card with reading status, rating and progress.
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
@@ -219,6 +229,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                       ),
 
                       const SizedBox(height: 16),
+                      // Status chip with tap-to-change behavior.
                       Row(
                         children: [
                           Text(
@@ -259,6 +270,8 @@ class _BookDetailPageState extends State<BookDetailPage> {
                         ],
                       ),
                       const SizedBox(height: 16),
+
+                      // Rating row with interactive stars.
                       Row(
                         children: [
                           Text(
@@ -324,6 +337,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
 
                       const SizedBox(height: 16),
 
+                      // progress bar.
                       Row(
                         children: [
                           Text(
@@ -355,6 +369,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                         ),
                       ),
                       const SizedBox(height: 12),
+                      // Shortcut to open the notes page
                       Align(
                         alignment: Alignment.centerLeft,
                         child: TextButton.icon(
@@ -370,6 +385,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                   ),
                 ),
                 const SizedBox(height: 24),
+                // Description section.
                 Text(
                   'Description :',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -390,7 +406,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
     );
   }
 
-  //nick
+  // Builds the "Reading & rating history" box
 
   Widget _buildRatingHistorySection(Color primary) {
     final hasPastRatings = _book.ratingHistory.isNotEmpty;
@@ -404,7 +420,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
 
     final tiles = <Widget>[];
 
-    // 1) Past ratings (those added to history via startReread)
+    // Past ratings (those added to history via startReread)
     for (var i = 0; i < _book.ratingHistory.length; i++) {
       final rating = _book.ratingHistory[i];
       String dateText = '';
@@ -439,7 +455,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
       );
     }
 
-    //   Current reading 
+    //  Current reading 
     final shouldShowCurrent =
         hasCurrentRating ||
         (_book.section == Status.finished && hasCompletionDate);
@@ -513,6 +529,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
     );
   }
 
+  // Reusable row for displaying book data as "Label : Value"
   Widget _infoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),

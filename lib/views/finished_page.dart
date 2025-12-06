@@ -5,6 +5,7 @@ import '../model/book.dart';
 import 'book_detail_page.dart';
 import 'book_notes_page.dart';
 
+// Screen that shows all finished books from the library.
 class FinishedPage extends StatefulWidget {
   const FinishedPage({super.key});
 
@@ -13,8 +14,11 @@ class FinishedPage extends StatefulWidget {
 }
 
 class _FinishedPageState extends State<FinishedPage> {
+
+  // Shared controller used to access and update book data.
   final PagerController _controller = PagerController.instance;
 
+  // Future used for the initial load of library books.
   late Future<List<Book>> _loadFuture;
   List<Book> _allBooks = [];
   String _searchQuery = '';
@@ -26,7 +30,7 @@ class _FinishedPageState extends State<FinishedPage> {
     _loadFuture = _controller.getLibraryBooks();
   }
 
-  /// Returns finished books filtered by the current search query.
+  // Returns finished books filtered by the current search query.
   List<Book> _filteredBooks() {
     final base = _allBooks;
     if (_searchQuery.trim().isEmpty) return List<Book>.from(base);
@@ -69,7 +73,7 @@ class _FinishedPageState extends State<FinishedPage> {
                 ),
               ),
 
-              // Search bar
+              // Search bar το filter finished books
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: TextField(
@@ -146,6 +150,7 @@ class _FinishedPageState extends State<FinishedPage> {
 
                         return FinishedBookCard(
                           book: book,
+                          // Update rating when a star is pressed.
                           onRatePressed: (starIndex) async {
                             final ok =
                                 await _controller.updateRating(book, starIndex);
@@ -161,6 +166,7 @@ class _FinishedPageState extends State<FinishedPage> {
                             // Rebuild to reflect the new rating.
                             setState(() {});
                           },
+                          // Open book details screen.
                           onInfoPressed: () {
                             Navigator.push(
                               context,
@@ -169,6 +175,7 @@ class _FinishedPageState extends State<FinishedPage> {
                               ),
                             );
                           },
+                          // Open notes screen for this book.
                           onNotesPressed: () {
                             Navigator.push(
                               context,
@@ -180,6 +187,8 @@ class _FinishedPageState extends State<FinishedPage> {
                               ),
                             );
                           },
+
+                          // Start rereading the book.
                           onRereadPressed: () async {
                           // Remember from which section the book started (should be Finished)
                           final previousSection = book.section;
@@ -214,9 +223,9 @@ class _FinishedPageState extends State<FinishedPage> {
                             );
                           }
 
-                          // The book is now in the Reading section, so remove it
-                          // from the local Finished list.
+                          // The book is now in the Reading section
                           setState(() {
+                            // Remove from finished books list
                             _allBooks.removeWhere((b) => b.id == book.id);
                           });
                         },
@@ -236,6 +245,8 @@ class _FinishedPageState extends State<FinishedPage> {
   }
 }
 
+
+// Card widget for a finished book in the Finished list.
 class FinishedBookCard extends StatelessWidget {
   const FinishedBookCard({
     super.key,
@@ -257,15 +268,8 @@ class FinishedBookCard extends StatelessWidget {
     const cardBrown = Color(0xFF6B3A19);
 
     // Number of times this book has been fully completed.
-    // If the data is older and completedReadings is still 0,
-    // treat a finished book as at least one read.
-   
+    
     final totalReads = book.completedReadings > 0 ? book.completedReadings : 1;
-
-
-    //final totalReads = totalReadsFromRatings > 0
-      //  ? totalReadsFromRatings
-        //: (book.completedReadings > 0 ? book.completedReadings : 1);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12.0),
