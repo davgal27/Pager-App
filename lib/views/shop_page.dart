@@ -89,11 +89,11 @@ class _ShopPageState extends State<ShopPage> {
                 // TEXT FIELDS FOR FILTER
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Name'),
+                  decoration: const InputDecoration(labelText: 'Name of Filter'),
                 ),
                 TextField(
                   controller: queryController,
-                  decoration: const InputDecoration(labelText: 'Query'),
+                  decoration: const InputDecoration(labelText: 'Search Query'),
                 ),
                 TextField(
                   controller: minController,
@@ -123,7 +123,7 @@ class _ShopPageState extends State<ShopPage> {
                 ),
                 // MIN RATING DROPDOWN
                 DropdownButtonFormField<int>(
-                  decoration: const InputDecoration(labelText: 'Min Rating'),
+                  decoration: const InputDecoration(labelText: 'Minimum Rating'),
                   value: minRating,
                   items: List.generate(
                     5,
