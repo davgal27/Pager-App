@@ -1,3 +1,5 @@
+/// AUTHOR : LUCAS LABHINI (XLABHIL00)
+
 import 'package:flutter/material.dart';
 
 import '../controller/pager_controller.dart';
