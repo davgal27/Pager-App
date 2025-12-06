@@ -101,7 +101,7 @@ class _LibraryPageState extends State<LibraryPage> {
               // FILTER FIELDS
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(labelText: 'Name'),
+                decoration: const InputDecoration(labelText: 'Name of Filter'),
               ),
               TextField(
                 controller: queryController,
