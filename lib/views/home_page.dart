@@ -1,4 +1,4 @@
-/// AUTHOR : LUCAS LABHINI XLABHIL00
+/// AUTHOR : LUCAS LABHINI (XLABHIL00)
 
 import 'package:flutter/material.dart';
 
