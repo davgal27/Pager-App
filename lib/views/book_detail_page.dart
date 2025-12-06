@@ -92,19 +92,19 @@ class _BookDetailPageState extends State<BookDetailPage> {
 
     if (selected == null || selected == _book.section) return;
 
-    // 👉 Κρατάμε από ποιο status ξεκίνησε
+    // we keep the previous section for the message
     final previousSection = _book.section;
 
     final ok = await _controller.changeSection(_book, selected);
     if (!mounted || !ok) return;
 
-    // 👉 Ρωτάμε τον controller τι μήνυμα πρέπει να δείξουμε
+    // we ask the controller what message to show
     final message = _controller.buildSectionChangeMessage(
       _book,
       previousSection,
       selected,
     );
-
+    // show snackbar if message is not null
     if (message != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -292,7 +292,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                       ),
                       const SizedBox(height: 8),
 
-                      // 🔹 Κουμπί εμφάνισης ιστορικού – μόνο αν το βιβλίο έχει διαβαστεί > 1 φορά
+                      // button to toggle rating history(only if completedReadings > 1)
                       if (_book.completedReadings > 1)
                         Align(
                           alignment: Alignment.centerLeft,
@@ -316,7 +316,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                           ),
                         ),
 
-                      // 🔹 Το κουτί με το ιστορικό εμφανίζεται μόνο όταν το toggle είναι true
+                      // the box with the history appears only when the toggle is true
                       if (_showHistory) ...[
                         const SizedBox(height: 8),
                         _buildRatingHistorySection(primary),
@@ -397,15 +397,14 @@ class _BookDetailPageState extends State<BookDetailPage> {
     final hasCurrentRating = _book.rating > 0;
     final hasCompletionDate = _book.lastProgressUpdated != null;
 
-    // Αν δεν υπάρχει ούτε προηγούμενο rating,
-    // ούτε τρέχον rating, ούτε ημερομηνία completion -> μην δείχνεις τίποτα.
+    // If no history to show, return empty
     if (!hasPastRatings && !hasCurrentRating && !hasCompletionDate) {
       return const SizedBox.shrink();
     }
 
     final tiles = <Widget>[];
 
-    // 🔹 1) Past ratings (αυτά που μπήκαν στο history μέσω startReread)
+    // 1) Past ratings (those added to history via startReread)
     for (var i = 0; i < _book.ratingHistory.length; i++) {
       final rating = _book.ratingHistory[i];
       String dateText = '';
@@ -413,7 +412,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
         dateText = _formatDate(_book.ratingHistoryDates[i]);
       }
 
-      // Αν rating == 0, το δείχνουμε σαν "No rating"
+      // If rating == 0, show as "No rating" (thats for the history )
       final ratingText = rating == 0 ? 'No rating' : '$rating/5';
 
       tiles.add(
@@ -440,7 +439,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
       );
     }
 
-    //  2) Current reading
+    //   Current reading 
     final shouldShowCurrent =
         hasCurrentRating ||
         (_book.section == Status.finished && hasCompletionDate);
